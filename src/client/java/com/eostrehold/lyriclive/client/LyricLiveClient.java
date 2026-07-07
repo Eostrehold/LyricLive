@@ -6,16 +6,17 @@ import com.eostrehold.lyriclive.client.core.TimelineManager;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.display.LyricRenderer;
 import com.eostrehold.lyriclive.client.gui.MainScreen;
-import com.eostrehold.lyriclive.client.gui.SettingsScreen;
 import com.eostrehold.lyriclive.client.sender.ChatSender;
 import com.eostrehold.lyriclive.client.sender.CommandSender;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
@@ -44,6 +45,9 @@ public class LyricLiveClient implements ClientModInitializer {
     // 歌词文件路径
     private static Path currentLyricFile;
 
+    // 快捷键分类
+    private static KeyMapping.Category CATEGORY;
+
     @Override
     public void onInitializeClient() {
         LyricLive.LOGGER.info("LyricLive 客户端初始化开始");
@@ -59,10 +63,15 @@ public class LyricLiveClient implements ClientModInitializer {
         // 初始化 GUI
         mainScreen = new MainScreen(playbackController, timelineManager, lyricRenderer, chatSender, commandSender, displayConfig);
 
+        // 注册快捷键分类
+        CATEGORY = KeyMapping.Category.register(
+                Identifier.fromNamespaceAndPath(LyricLive.MOD_ID, "keys")
+        );
+
         // 注册快捷键
         registerKeyBindings();
 
-        // 注册 HUD 渲染回调
+        // 注册 HUD 渲染
         registerHudRenderer();
 
         // 注册客户端 Tick 回调
@@ -77,7 +86,7 @@ public class LyricLiveClient implements ClientModInitializer {
                 "key.lyriclive.open_gui",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_L,
-                "category.lyriclive.keys"
+                CATEGORY
         ));
 
         // 播放/暂停快捷键
@@ -85,7 +94,7 @@ public class LyricLiveClient implements ClientModInitializer {
                 "key.lyriclive.toggle_play_pause",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_P,
-                "category.lyriclive.keys"
+                CATEGORY
         ));
 
         // 停止快捷键
@@ -93,7 +102,7 @@ public class LyricLiveClient implements ClientModInitializer {
                 "key.lyriclive.stop",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_O,
-                "category.lyriclive.keys"
+                CATEGORY
         ));
 
         // 发送歌词快捷键
@@ -101,7 +110,7 @@ public class LyricLiveClient implements ClientModInitializer {
                 "key.lyriclive.send_lyric",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_K,
-                "category.lyriclive.keys"
+                CATEGORY
         ));
 
         // 切换自动发送快捷键
@@ -109,29 +118,28 @@ public class LyricLiveClient implements ClientModInitializer {
                 "key.lyriclive.toggle_auto_send",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_J,
-                "category.lyriclive.keys"
+                CATEGORY
         ));
 
         LyricLive.LOGGER.info("快捷键注册完成");
     }
 
     private void registerHudRenderer() {
-        HudRenderCallback.EVENT.register((guiGraphics, tickDelta) -> {
-            // 只在游戏内渲染（不在菜单界面）
-            Minecraft client = Minecraft.getInstance();
-            if (client.player != null && client.screen == null) {
-                lyricRenderer.render(guiGraphics);
-            }
-        });
+        HudElementRegistry.addLast(
+                Identifier.fromNamespaceAndPath(LyricLive.MOD_ID, "lyric_display"),
+                (context, tickCounter) -> {
+                    Minecraft client = Minecraft.getInstance();
+                    if (client.player != null && client.screen == null) {
+                        lyricRenderer.render(context);
+                    }
+                }
+        );
         LyricLive.LOGGER.info("HUD 渲染器注册完成");
     }
 
     private void registerClientTick() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            // 处理快捷键
             handleKeyBindings(client);
-
-            // 处理自动歌词发送
             handleAutoLyricSending();
         });
         LyricLive.LOGGER.info("客户端 Tick 回调注册完成");
@@ -157,7 +165,6 @@ public class LyricLiveClient implements ClientModInitializer {
         }
 
         while (sendLyricKey.consumeClick()) {
-            // 手动发送当前歌词
             String currentLyric = timelineManager.getCurrentLyricText();
             if (currentLyric != null && !currentLyric.isEmpty()) {
                 chatSender.forceSendLyric(currentLyric);
@@ -167,7 +174,6 @@ public class LyricLiveClient implements ClientModInitializer {
         while (toggleAutoSendKey.consumeClick()) {
             boolean newState = !chatSender.isEnabled();
             chatSender.setEnabled(newState);
-            // TODO: 显示通知
         }
     }
 
@@ -176,7 +182,6 @@ public class LyricLiveClient implements ClientModInitializer {
             return;
         }
 
-        // 自动发送歌词
         if (chatSender.isEnabled()) {
             String currentLyric = timelineManager.getCurrentLyricText();
             if (currentLyric != null && !currentLyric.isEmpty()) {
@@ -184,7 +189,6 @@ public class LyricLiveClient implements ClientModInitializer {
             }
         }
 
-        // 自动发送指令
         if (commandSender.isEnabled()) {
             String currentLyric = timelineManager.getCurrentLyricText();
             if (currentLyric != null && !currentLyric.isEmpty()) {
@@ -193,7 +197,6 @@ public class LyricLiveClient implements ClientModInitializer {
         }
     }
 
-    // 静态访问器
     public static PlaybackController getPlaybackController() {
         return playbackController;
     }
@@ -222,10 +225,6 @@ public class LyricLiveClient implements ClientModInitializer {
         return mainScreen;
     }
 
-    /**
-     * 加载歌词文件
-     * @param filePath 文件路径
-     */
     public static void loadLyricFile(String filePath) {
         try {
             Path path = Paths.get(filePath);
@@ -238,9 +237,6 @@ public class LyricLiveClient implements ClientModInitializer {
         }
     }
 
-    /**
-     * 获取当前歌词文件路径
-     */
     public static Path getCurrentLyricFile() {
         return currentLyricFile;
     }

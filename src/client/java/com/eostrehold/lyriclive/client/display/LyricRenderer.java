@@ -56,28 +56,15 @@ public class LyricRenderer {
             }
         }
 
-        // 获取带透明度的颜色
-        int fontColor = config.getFontColorARGB();
-        if (config.isFadeInOutEnabled()) {
-            int alphaValue = (int) (alpha * 255) & 0xFF;
-            fontColor = (alphaValue << 24) | (config.getFontColor() & 0x00FFFFFF);
-        }
+        // 获取带透明度的颜色 (ARGB格式)
+        int alphaValue = (int) (alpha * 255) & 0xFF;
+        int fontColor = (alphaValue << 24) | (config.getFontColor() & 0x00FFFFFF);
 
         // 绘制歌词文本
         if (config.isCentered()) {
-            // 居中绘制
-            if (config.isShadowEnabled()) {
-                guiGraphics.drawCenteredString(client.font, lyricText, x, y, fontColor);
-            } else {
-                guiGraphics.drawCenteredString(client.font, lyricText, x, y, fontColor);
-            }
+            guiGraphics.drawCenteredString(client.font, lyricText, x, y, fontColor);
         } else {
-            // 左对齐绘制
-            if (config.isShadowEnabled()) {
-                guiGraphics.drawString(client.font, lyricText, x, y, fontColor, true);
-            } else {
-                guiGraphics.drawString(client.font, lyricText, x, y, fontColor, false);
-            }
+            guiGraphics.drawString(client.font, lyricText, x, y, fontColor, config.isShadowEnabled());
         }
     }
 

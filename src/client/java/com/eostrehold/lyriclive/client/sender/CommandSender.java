@@ -34,9 +34,13 @@ public class CommandSender {
         }
 
         Minecraft client = Minecraft.getInstance();
-        if (client.player != null) {
+        if (client.player != null && client.getConnection() != null) {
             String command = commandTemplate.replace("{lyric}", lyricText);
-            client.player.command(command);
+            // 移除开头的 / 如果有
+            if (command.startsWith("/")) {
+                command = command.substring(1);
+            }
+            client.getConnection().sendCommand(command);
             lastSentLyric = lyricText;
             LyricLive.LOGGER.debug("歌词指令已发送: {}", command);
             return true;
@@ -69,9 +73,12 @@ public class CommandSender {
         }
 
         Minecraft client = Minecraft.getInstance();
-        if (client.player != null) {
+        if (client.player != null && client.getConnection() != null) {
             String command = commandTemplate.replace("{lyric}", lyricText);
-            client.player.command(command);
+            if (command.startsWith("/")) {
+                command = command.substring(1);
+            }
+            client.getConnection().sendCommand(command);
             lastSentLyric = lyricText;
             LyricLive.LOGGER.debug("歌词指令已强制发送: {}", command);
             return true;

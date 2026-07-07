@@ -52,27 +52,22 @@ public class SettingsScreen extends Screen {
         // 位置 X
         positionXBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY, inputWidth, 20, Component.literal("X 位置"));
         positionXBox.setValue(String.valueOf(displayConfig.getPositionX()));
-        positionXBox.setFilter(this::isValidFloat);
 
         // 位置 Y
         positionYBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + rowHeight, inputWidth, 20, Component.literal("Y 位置"));
         positionYBox.setValue(String.valueOf(displayConfig.getPositionY()));
-        positionYBox.setFilter(this::isValidFloat);
 
         // 字体大小
         fontSizeBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 2 * rowHeight, inputWidth, 20, Component.literal("字体大小"));
         fontSizeBox.setValue(String.valueOf(displayConfig.getFontSize()));
-        fontSizeBox.setFilter(this::isValidInt);
 
         // 颜色
         colorBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 3 * rowHeight, inputWidth, 20, Component.literal("字体颜色"));
         colorBox.setValue(String.format("%06X", displayConfig.getFontColor()));
-        colorBox.setFilter(this::isValidHex);
 
         // 透明度
         opacityBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 4 * rowHeight, inputWidth, 20, Component.literal("透明度"));
         opacityBox.setValue(String.valueOf(displayConfig.getOpacity()));
-        opacityBox.setFilter(this::isValidFloat);
 
         // 指令模板
         commandTemplateBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 5 * rowHeight, inputWidth * 2, 20, Component.literal("指令模板"));
@@ -140,9 +135,7 @@ public class SettingsScreen extends Screen {
 
     @Override
     public void onClose() {
-        // 保存设置
         saveSettings();
-        // 返回父界面
         if (this.minecraft != null) {
             this.minecraft.setScreen(parent);
         }
@@ -155,29 +148,24 @@ public class SettingsScreen extends Screen {
 
     private void saveSettings() {
         try {
-            // 保存位置
             float posX = Float.parseFloat(positionXBox.getValue());
             displayConfig.setPositionX(posX);
 
             float posY = Float.parseFloat(positionYBox.getValue());
             displayConfig.setPositionY(posY);
 
-            // 保存字体大小
             int fontSize = Integer.parseInt(fontSizeBox.getValue());
             displayConfig.setFontSize(fontSize);
 
-            // 保存颜色
             String colorStr = colorBox.getValue().replace("#", "");
             if (colorStr.length() == 6) {
                 int color = Integer.parseInt(colorStr, 16);
                 displayConfig.setFontColor(color);
             }
 
-            // 保存透明度
             float opacity = Float.parseFloat(opacityBox.getValue());
             displayConfig.setOpacity(opacity);
 
-            // 保存指令模板
             commandSender.setCommandTemplate(commandTemplateBox.getValue());
 
         } catch (NumberFormatException e) {
@@ -201,31 +189,5 @@ public class SettingsScreen extends Screen {
         boolean newValue = !displayConfig.isFadeInOutEnabled();
         displayConfig.setFadeInOutEnabled(newValue);
         fadeInOutToggleButton.setMessage(Component.literal("渐变: " + (newValue ? "开" : "关")));
-    }
-
-    private boolean isValidFloat(String text) {
-        if (text.isEmpty()) return true;
-        try {
-            Float.parseFloat(text);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-    private boolean isValidInt(String text) {
-        if (text.isEmpty()) return true;
-        try {
-            Integer.parseInt(text);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-    private boolean isValidHex(String text) {
-        if (text.isEmpty()) return true;
-        String hex = text.replace("#", "");
-        return hex.matches("[0-9A-Fa-f]{1,6}");
     }
 }

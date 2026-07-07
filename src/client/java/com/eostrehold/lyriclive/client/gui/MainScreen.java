@@ -10,7 +10,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 
 import java.nio.file.Path;
 
@@ -123,7 +122,7 @@ public class MainScreen extends Screen {
             }
 
             // 渲染歌词进度
-            String progress = String.format("歌词进度: %d/%d", 
+            String progress = String.format("歌词进度: %d/%d",
                     timelineManager.getCurrentLyricIndex() + 1,
                     timelineManager.getLyricCount());
             guiGraphics.drawString(this.font, progress, 10, 50, 0xFFFFFF);
@@ -148,7 +147,7 @@ public class MainScreen extends Screen {
 
     @Override
     public boolean isPauseScreen() {
-        return false; // 不暂停游戏
+        return false;
     }
 
     private void togglePlayPause() {
@@ -180,8 +179,6 @@ public class MainScreen extends Screen {
 
     private void openLyricFile() {
         // TODO: 实现文件选择对话框
-        // 暂时使用简单的输入框
-        // 实际实现需要使用 Minecraft 的文件选择器或自定义 GUI
     }
 
     private void reloadLyrics() {
