@@ -15,6 +15,9 @@ import net.minecraft.network.chat.Component;
 
 import java.nio.file.Path;
 
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 public class MainScreen extends Screen {
     private final PlaybackController playbackController;
     private final TimelineManager timelineManager;
@@ -100,11 +103,11 @@ public class MainScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
-
         Font minecraftFont = Minecraft.getInstance().font;
 
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
+
+        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
         String titleStr = this.title.getString();
         int titleWidth = minecraftFont.width(titleStr);
@@ -171,7 +174,28 @@ public class MainScreen extends Screen {
     }
 
     private void openLyricFile() {
-        // TODO: 实现文件选择对话框
+        Thread fileChooserThread = new Thread(() -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("选择 LRC 歌词文件");
+            fileChooser.setFileFilter(new FileNameExtensionFilter("LRC 歌词文件 (*.lrc)", "lrc"));
+
+            int selectedResult = fileChooser.showOpenDialog(null);
+            if (selectedResult != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+
+            Path selectedLyricFile = fileChooser.getSelectedFile().toPath();
+            Minecraft.getInstance().execute(() -> {
+                try {
+                    timelineManager.loadLyricFile(selectedLyricFile);
+                    currentLyricFile = selectedLyricFile;
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+            });
+        }, "LyricLive-LrcFileChooser");
+        fileChooserThread.setDaemon(true);
+        fileChooserThread.start();
     }
 
     private void reloadLyrics() {
@@ -185,7 +209,7 @@ public class MainScreen extends Screen {
     }
 
     private void openSettings() {
-        // TODO: 打开设置界面
+        Minecraft.getInstance().setScreen(new SettingsScreen(displayConfig, chatSender, commandSender, this));
     }
 
     private String formatTime(long millis) {

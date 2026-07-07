@@ -103,11 +103,11 @@ public class SettingsScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
-
         Font minecraftFont = Minecraft.getInstance().font;
 
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
+
+        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
         String titleStr = this.title.getString();
         int titleWidth = minecraftFont.width(titleStr);
