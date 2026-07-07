@@ -98,7 +98,9 @@ public class SettingsScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+        super.extractRenderState(guiGraphics, mouseX, mouseY);
+
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
 
         String titleStr = this.title.getString();
@@ -115,8 +117,6 @@ public class SettingsScreen extends Screen {
         guiGraphics.text(this.font, "字体颜色 (十六进制):", centerX - 100 - 80 - 5, startY + 3 * rowHeight + 5, 0xFFFFFF, true);
         guiGraphics.text(this.font, "透明度 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 4 * rowHeight + 5, 0xFFFFFF, true);
         guiGraphics.text(this.font, "指令模板:", centerX - 100 - 80 - 5, startY + 5 * rowHeight + 5, 0xFFFFFF, true);
-
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override

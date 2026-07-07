@@ -97,10 +97,11 @@ public class MainScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+        super.extractRenderState(guiGraphics, mouseX, mouseY);
+
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
 
-        // 居中绘制标题
         String titleStr = this.title.getString();
         int titleWidth = this.font.width(titleStr);
         guiGraphics.text(this.font, titleStr, (this.width - titleWidth) / 2, 10, 0xFFFFFF, true);
@@ -131,8 +132,6 @@ public class MainScreen extends Screen {
             case STOPPED -> "已停止";
         };
         guiGraphics.text(this.font, "状态: " + stateText, 10, 90, 0xFFFFFF, true);
-
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
