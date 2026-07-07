@@ -3,7 +3,7 @@ package com.eostrehold.lyriclive.client.gui;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.sender.ChatSender;
 import com.eostrehold.lyriclive.client.sender.CommandSender;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -49,50 +49,40 @@ public class SettingsScreen extends Screen {
         int inputWidth = 80;
         int buttonWidth = 80;
 
-        // 位置 X
         positionXBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY, inputWidth, 20, Component.literal("X 位置"));
         positionXBox.setValue(String.valueOf(displayConfig.getPositionX()));
 
-        // 位置 Y
         positionYBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + rowHeight, inputWidth, 20, Component.literal("Y 位置"));
         positionYBox.setValue(String.valueOf(displayConfig.getPositionY()));
 
-        // 字体大小
         fontSizeBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 2 * rowHeight, inputWidth, 20, Component.literal("字体大小"));
         fontSizeBox.setValue(String.valueOf(displayConfig.getFontSize()));
 
-        // 颜色
         colorBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 3 * rowHeight, inputWidth, 20, Component.literal("字体颜色"));
         colorBox.setValue(String.format("%06X", displayConfig.getFontColor()));
 
-        // 透明度
         opacityBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 4 * rowHeight, inputWidth, 20, Component.literal("透明度"));
         opacityBox.setValue(String.valueOf(displayConfig.getOpacity()));
 
-        // 指令模板
         commandTemplateBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 5 * rowHeight, inputWidth * 2, 20, Component.literal("指令模板"));
         commandTemplateBox.setValue(commandSender.getCommandTemplate());
         commandTemplateBox.setMaxLength(100);
 
-        // 阴影开关按钮
         shadowToggleButton = Button.builder(
                 Component.literal("阴影: " + (displayConfig.isShadowEnabled() ? "开" : "关")),
                 button -> toggleShadow()
         ).bounds(centerX + 10, startY, buttonWidth, 20).build();
 
-        // 居中开关按钮
         centeredToggleButton = Button.builder(
                 Component.literal("居中: " + (displayConfig.isCentered() ? "开" : "关")),
                 button -> toggleCentered()
         ).bounds(centerX + 10, startY + rowHeight, buttonWidth, 20).build();
 
-        // 淡入淡出开关按钮
         fadeInOutToggleButton = Button.builder(
                 Component.literal("渐变: " + (displayConfig.isFadeInOutEnabled() ? "开" : "关")),
                 button -> toggleFadeInOut()
         ).bounds(centerX + 10, startY + 2 * rowHeight, buttonWidth, 20).build();
 
-        // 完成按钮
         doneButton = Button.builder(
                 Component.literal("完成"),
                 button -> onClose()
@@ -111,14 +101,10 @@ public class SettingsScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // 渲染半透明背景
+    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
-
-        // 渲染标题
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 10, 0xFFFFFF);
 
-        // 渲染标签
         int centerX = this.width / 2;
         int startY = 30;
         int rowHeight = 30;
@@ -167,7 +153,6 @@ public class SettingsScreen extends Screen {
             displayConfig.setOpacity(opacity);
 
             commandSender.setCommandTemplate(commandTemplateBox.getValue());
-
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }

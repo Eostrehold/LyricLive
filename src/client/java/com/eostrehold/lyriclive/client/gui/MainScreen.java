@@ -6,7 +6,7 @@ import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.display.LyricRenderer;
 import com.eostrehold.lyriclive.client.sender.ChatSender;
 import com.eostrehold.lyriclive.client.sender.CommandSender;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -55,43 +55,36 @@ public class MainScreen extends Screen {
         int startX = (this.width - buttonWidth * 4) / 2;
         int startY = this.height - 60;
 
-        // 播放/暂停按钮
         playPauseButton = Button.builder(
                 Component.literal(playbackController.isPlaying() ? "暂停" : "播放"),
                 button -> togglePlayPause()
         ).bounds(startX, startY, buttonWidth, buttonHeight).build();
 
-        // 停止按钮
         stopButton = Button.builder(
                 Component.literal("停止"),
                 button -> stopPlayback()
         ).bounds(startX + buttonWidth + 10, startY, buttonWidth, buttonHeight).build();
 
-        // 聊天发送按钮
         chatSendButton = Button.builder(
                 Component.literal(chatSender.isEnabled() ? "聊天发送: 开" : "聊天发送: 关"),
                 button -> toggleChatSending()
         ).bounds(startX + 2 * (buttonWidth + 10), startY, buttonWidth, buttonHeight).build();
 
-        // 指令发送按钮
         commandSendButton = Button.builder(
                 Component.literal(commandSender.isEnabled() ? "指令发送: 开" : "指令发送: 关"),
                 button -> toggleCommandSending()
         ).bounds(startX + 3 * (buttonWidth + 10), startY, buttonWidth, buttonHeight).build();
 
-        // 加载歌词按钮
         loadLyricButton = Button.builder(
                 Component.literal("加载歌词"),
                 button -> openLyricFile()
         ).bounds(this.width / 2 - 130, 30, 120, 20).build();
 
-        // 重新加载按钮
         reloadLyricButton = Button.builder(
                 Component.literal("重新加载"),
                 button -> reloadLyrics()
         ).bounds(this.width / 2 + 10, 30, 120, 20).build();
 
-        // 设置按钮
         settingsButton = Button.builder(
                 Component.literal("设置"),
                 button -> openSettings()
@@ -107,34 +100,27 @@ public class MainScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // 渲染半透明背景
+    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
-
-        // 渲染标题
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 10, 0xFFFFFF);
 
-        // 渲染歌词信息
         if (timelineManager.hasLyrics()) {
             String currentLyric = timelineManager.getCurrentLyricText();
             if (currentLyric != null && !currentLyric.isEmpty()) {
                 guiGraphics.drawCenteredString(this.font, currentLyric, this.width / 2, 80, 0xFFFFFF);
             }
 
-            // 渲染歌词进度
             String progress = String.format("歌词进度: %d/%d",
                     timelineManager.getCurrentLyricIndex() + 1,
                     timelineManager.getLyricCount());
             guiGraphics.drawString(this.font, progress, 10, 50, 0xFFFFFF);
 
-            // 渲染当前时间
             String timeStr = formatTime(playbackController.getCurrentTimeMillis());
             guiGraphics.drawString(this.font, "时间: " + timeStr, 10, 70, 0xFFFFFF);
         } else {
             guiGraphics.drawCenteredString(this.font, "未加载歌词文件", this.width / 2, 80, 0xAAAAAA);
         }
 
-        // 渲染播放状态
         String stateText = switch (playbackController.getState()) {
             case PLAYING -> "播放中";
             case PAUSED -> "已暂停";
@@ -202,9 +188,6 @@ public class MainScreen extends Screen {
         return String.format("%02d:%02d", minutes, seconds);
     }
 
-    /**
-     * 设置当前歌词文件路径
-     */
     public void setCurrentLyricFile(Path file) {
         this.currentLyricFile = file;
     }

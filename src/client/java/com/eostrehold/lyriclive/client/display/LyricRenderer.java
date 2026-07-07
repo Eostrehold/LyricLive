@@ -2,7 +2,7 @@ package com.eostrehold.lyriclive.client.display;
 
 import com.eostrehold.lyriclive.client.core.TimelineManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * 歌词渲染器，负责在屏幕上绘制歌词。
@@ -22,7 +22,7 @@ public class LyricRenderer {
      * 渲染歌词（每帧调用）
      * @param guiGraphics GUI 图形上下文
      */
-    public void render(GuiGraphics guiGraphics) {
+    public void render(GuiGraphicsExtractor guiGraphics) {
         if (!timelineManager.hasLyrics()) {
             return;
         }
@@ -51,7 +51,6 @@ public class LyricRenderer {
         if (config.isFadeInOutEnabled()) {
             long elapsed = System.currentTimeMillis() - lastLyricChangeTime;
             if (elapsed < config.getFadeInDuration()) {
-                // 淡入阶段
                 alpha *= (float) elapsed / config.getFadeInDuration();
             }
         }
@@ -68,16 +67,10 @@ public class LyricRenderer {
         }
     }
 
-    /**
-     * 获取显示配置
-     */
     public DisplayConfig getConfig() {
         return config;
     }
 
-    /**
-     * 获取时间轴管理器
-     */
     public TimelineManager getTimelineManager() {
         return timelineManager;
     }

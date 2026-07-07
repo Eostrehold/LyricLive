@@ -12,7 +12,6 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -24,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class LyricLiveClient implements ClientModInitializer {
-    // 核心模块
     private static PlaybackController playbackController;
     private static TimelineManager timelineManager;
     private static DisplayConfig displayConfig;
@@ -32,27 +30,22 @@ public class LyricLiveClient implements ClientModInitializer {
     private static ChatSender chatSender;
     private static CommandSender commandSender;
 
-    // GUI
     private static MainScreen mainScreen;
 
-    // 快捷键
     private static KeyMapping openGuiKey;
     private static KeyMapping togglePlayPauseKey;
     private static KeyMapping stopKey;
     private static KeyMapping sendLyricKey;
     private static KeyMapping toggleAutoSendKey;
 
-    // 歌词文件路径
     private static Path currentLyricFile;
 
-    // 快捷键分类
     private static KeyMapping.Category CATEGORY;
 
     @Override
     public void onInitializeClient() {
         LyricLive.LOGGER.info("LyricLive 客户端初始化开始");
 
-        // 初始化核心模块
         playbackController = new PlaybackController();
         timelineManager = new TimelineManager(playbackController);
         displayConfig = new DisplayConfig();
@@ -60,28 +53,20 @@ public class LyricLiveClient implements ClientModInitializer {
         commandSender = new CommandSender();
         lyricRenderer = new LyricRenderer(timelineManager, displayConfig);
 
-        // 初始化 GUI
         mainScreen = new MainScreen(playbackController, timelineManager, lyricRenderer, chatSender, commandSender, displayConfig);
 
-        // 注册快捷键分类
         CATEGORY = KeyMapping.Category.register(
                 Identifier.fromNamespaceAndPath(LyricLive.MOD_ID, "keys")
         );
 
-        // 注册快捷键
         registerKeyBindings();
-
-        // 注册 HUD 渲染
         registerHudRenderer();
-
-        // 注册客户端 Tick 回调
         registerClientTick();
 
         LyricLive.LOGGER.info("LyricLive 客户端初始化完成");
     }
 
     private void registerKeyBindings() {
-        // 打开 GUI 快捷键
         openGuiKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.lyriclive.open_gui",
                 InputConstants.Type.KEYSYM,
@@ -89,7 +74,6 @@ public class LyricLiveClient implements ClientModInitializer {
                 CATEGORY
         ));
 
-        // 播放/暂停快捷键
         togglePlayPauseKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.lyriclive.toggle_play_pause",
                 InputConstants.Type.KEYSYM,
@@ -97,7 +81,6 @@ public class LyricLiveClient implements ClientModInitializer {
                 CATEGORY
         ));
 
-        // 停止快捷键
         stopKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.lyriclive.stop",
                 InputConstants.Type.KEYSYM,
@@ -105,7 +88,6 @@ public class LyricLiveClient implements ClientModInitializer {
                 CATEGORY
         ));
 
-        // 发送歌词快捷键
         sendLyricKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.lyriclive.send_lyric",
                 InputConstants.Type.KEYSYM,
@@ -113,7 +95,6 @@ public class LyricLiveClient implements ClientModInitializer {
                 CATEGORY
         ));
 
-        // 切换自动发送快捷键
         toggleAutoSendKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.lyriclive.toggle_auto_send",
                 InputConstants.Type.KEYSYM,
@@ -127,7 +108,7 @@ public class LyricLiveClient implements ClientModInitializer {
     private void registerHudRenderer() {
         HudElementRegistry.addLast(
                 Identifier.fromNamespaceAndPath(LyricLive.MOD_ID, "lyric_display"),
-                (context, tickCounter) -> {
+                (context, deltaTracker) -> {
                     Minecraft client = Minecraft.getInstance();
                     if (client.player != null && client.screen == null) {
                         lyricRenderer.render(context);
