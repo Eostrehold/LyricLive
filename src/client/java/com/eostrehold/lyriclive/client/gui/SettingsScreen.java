@@ -12,25 +12,29 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public class SettingsScreen extends Screen {
+    private static final int BTN_W = 80;
+    private static final int BTN_H = 20;
+    private static final int EDIT_W = 60;
+    private static final int EDIT_H = 20;
+    private static final int LABEL_X = 12;
+    private static final int EDIT_X  = 130;
+    private static final int NOTE_X  = 200;
+    private static final int START_Y = 30;
+    private static final int ROW_H   = 24;
+
     private final DisplayConfig displayConfig;
     private final ChatSender chatSender;
     private final CommandSender commandSender;
     private final Screen parent;
 
-    private EditBox positionXBox;
-    private EditBox positionYBox;
-    private EditBox fontSizeBox;
-    private EditBox colorBox;
-    private EditBox opacityBox;
-    private EditBox commandTemplateBox;
-
-    private Button shadowToggleButton;
-    private Button centeredToggleButton;
-    private Button fadeInOutToggleButton;
+    private EditBox posXBox, posYBox, fontSizeBox, colorBox, opacityBox;
+    private EditBox cmdTemplateBox;
+    private Button shadowToggle, centeredToggle, fadeToggle;
     private Button doneButton;
 
-    public SettingsScreen(DisplayConfig displayConfig, ChatSender chatSender, CommandSender commandSender, Screen parent) {
-        super(Component.literal("LyricLive 设置"));
+    public SettingsScreen(DisplayConfig displayConfig, ChatSender chatSender,
+                          CommandSender commandSender, Screen parent) {
+        super(Component.literal("LyricLive · 设置"));
         this.displayConfig = displayConfig;
         this.chatSender = chatSender;
         this.commandSender = commandSender;
@@ -40,145 +44,118 @@ public class SettingsScreen extends Screen {
     @Override
     protected void init() {
         super.init();
+        Font f = Minecraft.getInstance().font;
 
-        Font minecraftFont = Minecraft.getInstance().font;
+        int y = START_Y;
 
-        int centerX = this.width / 2;
-        int startY = 30;
-        int rowHeight = 30;
-        int labelWidth = 100;
-        int inputWidth = 80;
-        int buttonWidth = 80;
+        posXBox     = addEditBox(f, EDIT_X, y, EDIT_W, EDIT_H, String.valueOf(displayConfig.getPositionX()));
+        y += ROW_H;
+        posYBox     = addEditBox(f, EDIT_X, y, EDIT_W, EDIT_H, String.valueOf(displayConfig.getPositionY()));
+        y += ROW_H;
+        fontSizeBox = addEditBox(f, EDIT_X, y, EDIT_W, EDIT_H, String.valueOf(displayConfig.getFontSize()));
+        y += ROW_H;
+        colorBox    = addEditBox(f, EDIT_X, y, EDIT_W, EDIT_H, String.format("%06X", displayConfig.getFontColor()));
+        y += ROW_H;
+        opacityBox  = addEditBox(f, EDIT_X, y, EDIT_W, EDIT_H, String.valueOf(displayConfig.getOpacity()));
+        y += ROW_H;
+        cmdTemplateBox = addEditBox(f, EDIT_X, y, 150, EDIT_H, commandSender.getCommandTemplate());
+        cmdTemplateBox.setMaxLength(100);
+        y += ROW_H + 4;
 
-        positionXBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY, inputWidth, 20, Component.literal("X 位置"));
-        positionXBox.setValue(String.valueOf(displayConfig.getPositionX()));
+        shadowToggle  = addToggle(LABEL_X,            y, "文字阴影", displayConfig.isShadowEnabled(), this::toggleShadow);
+        centeredToggle = addToggle(LABEL_X + BTN_W + 8, y, "居中显示", displayConfig.isCentered(),     this::toggleCentered);
+        fadeToggle    = addToggle(LABEL_X + 2 * (BTN_W + 8), y, "淡入淡出", displayConfig.isFadeInOutEnabled(), this::toggleFade);
 
-        positionYBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY + rowHeight, inputWidth, 20, Component.literal("Y 位置"));
-        positionYBox.setValue(String.valueOf(displayConfig.getPositionY()));
-
-        fontSizeBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY + 2 * rowHeight, inputWidth, 20, Component.literal("字体大小"));
-        fontSizeBox.setValue(String.valueOf(displayConfig.getFontSize()));
-
-        colorBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY + 3 * rowHeight, inputWidth, 20, Component.literal("字体颜色"));
-        colorBox.setValue(String.format("%06X", displayConfig.getFontColor()));
-
-        opacityBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY + 4 * rowHeight, inputWidth, 20, Component.literal("透明度"));
-        opacityBox.setValue(String.valueOf(displayConfig.getOpacity()));
-
-        commandTemplateBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY + 5 * rowHeight, inputWidth * 2, 20, Component.literal("指令模板"));
-        commandTemplateBox.setValue(commandSender.getCommandTemplate());
-        commandTemplateBox.setMaxLength(100);
-
-        shadowToggleButton = Button.builder(
-                Component.literal("阴影: " + (displayConfig.isShadowEnabled() ? "开" : "关")),
-                button -> toggleShadow()
-        ).bounds(centerX + 10, startY, buttonWidth, 20).build();
-
-        centeredToggleButton = Button.builder(
-                Component.literal("居中: " + (displayConfig.isCentered() ? "开" : "关")),
-                button -> toggleCentered()
-        ).bounds(centerX + 10, startY + rowHeight, buttonWidth, 20).build();
-
-        fadeInOutToggleButton = Button.builder(
-                Component.literal("渐变: " + (displayConfig.isFadeInOutEnabled() ? "开" : "关")),
-                button -> toggleFadeInOut()
-        ).bounds(centerX + 10, startY + 2 * rowHeight, buttonWidth, 20).build();
-
-        doneButton = Button.builder(
-                Component.literal("完成"),
-                button -> onClose()
-        ).bounds(centerX - 50, this.height - 40, 100, 20).build();
-
-        addRenderableWidget(positionXBox);
-        addRenderableWidget(positionYBox);
-        addRenderableWidget(fontSizeBox);
-        addRenderableWidget(colorBox);
-        addRenderableWidget(opacityBox);
-        addRenderableWidget(commandTemplateBox);
-        addRenderableWidget(shadowToggleButton);
-        addRenderableWidget(centeredToggleButton);
-        addRenderableWidget(fadeInOutToggleButton);
+        doneButton = Button.builder(Component.literal("保存并返回"), btn -> onClose())
+                .bounds(this.width / 2 - 50, this.height - 30, 100, BTN_H).build();
         addRenderableWidget(doneButton);
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
-        Font minecraftFont = Minecraft.getInstance().font;
+    public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float pt) {
+        Font f = Minecraft.getInstance().font;
+        g.fill(0, 0, this.width, this.height, 0x90000000);
+        super.extractRenderState(g, mx, my, pt);
+        g.text(f, "LyricLive · 设置", (this.width - f.width("LyricLive · 设置")) / 2, 8, 0xFFFF55, true);
 
-        guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
+        int y = START_Y;
+        g.text(f, "HUD 歌词显示位置 (0.0~1.0)", LABEL_X, y + 5, 0xAAAAAA, true);
+        g.text(f, "X 位置", LABEL_X,     y + 5, 0xFFFFFF, true);
+        drawNote(g, f, "屏幕宽度比例，0.5 = 居中", NOTE_X, y + 5);
+        y += ROW_H;
 
-        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
+        g.text(f, "Y 位置", LABEL_X,     y + 5, 0xFFFFFF, true);
+        drawNote(g, f, "屏幕高度比例，0.8 = 偏下方", NOTE_X, y + 5);
+        y += ROW_H;
 
-        String titleStr = this.title.getString();
-        int titleWidth = minecraftFont.width(titleStr);
-        guiGraphics.text(minecraftFont, titleStr, (this.width - titleWidth) / 2, 10, 0xFFFFFF, true);
+        g.text(f, "字体大小", LABEL_X,    y + 5, 0xFFFFFF, true);
+        drawNote(g, f, "像素大小 (8 ~ 64)", NOTE_X, y + 5);
+        y += ROW_H;
 
-        int centerX = this.width / 2;
-        int startY = 30;
-        int rowHeight = 30;
+        g.text(f, "字体颜色", LABEL_X,    y + 5, 0xFFFFFF, true);
+        drawNote(g, f, "十六进制 RGB，如 FFFFFF = 白色", NOTE_X, y + 5);
+        y += ROW_H;
 
-        guiGraphics.text(minecraftFont, "X 位置 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 5, 0xFFFFFF, true);
-        guiGraphics.text(minecraftFont, "Y 位置 (0.0-1.0):", centerX - 100 - 80 - 5, startY + rowHeight + 5, 0xFFFFFF, true);
-        guiGraphics.text(minecraftFont, "字体大小 (8-64):", centerX - 100 - 80 - 5, startY + 2 * rowHeight + 5, 0xFFFFFF, true);
-        guiGraphics.text(minecraftFont, "字体颜色 (十六进制):", centerX - 100 - 80 - 5, startY + 3 * rowHeight + 5, 0xFFFFFF, true);
-        guiGraphics.text(minecraftFont, "透明度 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 4 * rowHeight + 5, 0xFFFFFF, true);
-        guiGraphics.text(minecraftFont, "指令模板:", centerX - 100 - 80 - 5, startY + 5 * rowHeight + 5, 0xFFFFFF, true);
+        g.text(f, "不透明度", LABEL_X,    y + 5, 0xFFFFFF, true);
+        drawNote(g, f, "1.0 = 完全不透明", NOTE_X, y + 5);
+        y += ROW_H;
+
+        g.text(f, "指令模板", LABEL_X,    y + 5, 0xFFFFFF, true);
+        drawNote(g, f, "{lyric} 会被替换为歌词文本", NOTE_X, y + 5);
+    }
+
+    private void drawNote(GuiGraphicsExtractor g, Font f, String text, int x, int y) {
+        g.text(f, text, x, y, 0x888888, false);
+    }
+
+    private EditBox addEditBox(Font f, int x, int y, int w, int h, String initial) {
+        EditBox box = new EditBox(f, x, y, w, h, Component.empty());
+        box.setValue(initial);
+        addRenderableWidget(box);
+        return box;
+    }
+
+    private Button addToggle(int x, int y, String text, boolean value, Runnable action) {
+        Button b = Button.builder(Component.literal(text + ": " + (value ? "开" : "关")), btn -> action.run())
+                .bounds(x, y, BTN_W, BTN_H).build();
+        addRenderableWidget(b);
+        return b;
+    }
+
+    private void toggleShadow() {
+        displayConfig.setShadowEnabled(!displayConfig.isShadowEnabled());
+        shadowToggle.setMessage(Component.literal("文字阴影: " + (displayConfig.isShadowEnabled() ? "开" : "关")));
+    }
+
+    private void toggleCentered() {
+        displayConfig.setCentered(!displayConfig.isCentered());
+        centeredToggle.setMessage(Component.literal("居中显示: " + (displayConfig.isCentered() ? "开" : "关")));
+    }
+
+    private void toggleFade() {
+        displayConfig.setFadeInOutEnabled(!displayConfig.isFadeInOutEnabled());
+        fadeToggle.setMessage(Component.literal("淡入淡出: " + (displayConfig.isFadeInOutEnabled() ? "开" : "关")));
     }
 
     @Override
     public void onClose() {
         saveSettings();
-        if (this.minecraft != null) {
-            this.minecraft.setScreen(parent);
-        }
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
+        if (this.minecraft != null) this.minecraft.setScreen(parent);
     }
 
     private void saveSettings() {
         try {
-            float posX = Float.parseFloat(positionXBox.getValue());
-            displayConfig.setPositionX(posX);
-
-            float posY = Float.parseFloat(positionYBox.getValue());
-            displayConfig.setPositionY(posY);
-
-            int fontSize = Integer.parseInt(fontSizeBox.getValue());
-            displayConfig.setFontSize(fontSize);
-
-            String colorStr = colorBox.getValue().replace("#", "");
-            if (colorStr.length() == 6) {
-                int color = Integer.parseInt(colorStr, 16);
-                displayConfig.setFontColor(color);
-            }
-
-            float opacity = Float.parseFloat(opacityBox.getValue());
-            displayConfig.setOpacity(opacity);
-
-            commandSender.setCommandTemplate(commandTemplateBox.getValue());
+            displayConfig.setPositionX(Float.parseFloat(posXBox.getValue()));
+            displayConfig.setPositionY(Float.parseFloat(posYBox.getValue()));
+            displayConfig.setFontSize(Integer.parseInt(fontSizeBox.getValue()));
+            displayConfig.setFontColor(Integer.parseInt(colorBox.getValue().replace("#", ""), 16));
+            displayConfig.setOpacity(Float.parseFloat(opacityBox.getValue()));
+            commandSender.setCommandTemplate(cmdTemplateBox.getValue());
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
     }
 
-    private void toggleShadow() {
-        boolean newValue = !displayConfig.isShadowEnabled();
-        displayConfig.setShadowEnabled(newValue);
-        shadowToggleButton.setMessage(Component.literal("阴影: " + (newValue ? "开" : "关")));
-    }
-
-    private void toggleCentered() {
-        boolean newValue = !displayConfig.isCentered();
-        displayConfig.setCentered(newValue);
-        centeredToggleButton.setMessage(Component.literal("居中: " + (newValue ? "开" : "关")));
-    }
-
-    private void toggleFadeInOut() {
-        boolean newValue = !displayConfig.isFadeInOutEnabled();
-        displayConfig.setFadeInOutEnabled(newValue);
-        fadeInOutToggleButton.setMessage(Component.literal("渐变: " + (newValue ? "开" : "关")));
-    }
+    @Override
+    public boolean isPauseScreen() { return false; }
 }
