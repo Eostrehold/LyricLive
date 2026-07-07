@@ -273,6 +273,10 @@ public class MainScreen extends Screen {
         g.text(f, s, x - f.width(s) / 2, y, c, true);
     }
 
+    public void setCurrentLyricFile(Path file) {
+        this.currentLyricFile = file;
+    }
+
     @Override
     public boolean isPauseScreen() { return false; }
 }
