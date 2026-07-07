@@ -2,7 +2,6 @@ package com.eostrehold.lyriclive.client.sender;
 
 import com.eostrehold.lyriclive.LyricLive;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 
 /**
  * 聊天发送器，将歌词发送到游戏聊天栏。
@@ -34,8 +33,8 @@ public class ChatSender {
         }
 
         Minecraft client = Minecraft.getInstance();
-        if (client.player != null) {
-            client.player.sendSystemMessage(Component.literal(lyricText));
+        if (client.player != null && client.getConnection() != null) {
+            client.getConnection().sendChat(lyricText);
             lastSentLyric = lyricText;
             LyricLive.LOGGER.debug("歌词已发送: {}", lyricText);
             return true;
@@ -68,8 +67,8 @@ public class ChatSender {
         }
 
         Minecraft client = Minecraft.getInstance();
-        if (client.player != null) {
-            client.player.sendSystemMessage(Component.literal(lyricText));
+        if (client.player != null && client.getConnection() != null) {
+            client.getConnection().sendChat(lyricText);
             lastSentLyric = lyricText;
             LyricLive.LOGGER.debug("歌词已强制发送: {}", lyricText);
             return true;

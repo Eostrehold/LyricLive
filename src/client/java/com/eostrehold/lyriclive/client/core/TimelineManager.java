@@ -7,6 +7,8 @@ import com.eostrehold.lyriclive.client.lrc.LyricTrack;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 时间轴管理器，负责加载歌词轨道并提供当前歌词信息。
@@ -68,6 +70,33 @@ public class TimelineManager {
 
         long currentTime = playbackController.getCurrentTimeMillis();
         return currentTrack.getCurrentLyric(currentTime);
+    }
+
+    /**
+     * 获取当前歌词上下文行，包含当前行前后指定数量的歌词。
+     * @param surroundingLineCount 当前歌词前后各取多少行
+     * @return 当前歌词上下文列表
+     */
+    public List<LrcLyric> getCurrentLyricContext(int surroundingLineCount) {
+        if (currentTrack == null || currentTrack.isEmpty()) {
+            return List.of();
+        }
+
+        long currentTime = playbackController.getCurrentTimeMillis();
+        int centerLyricIndex = currentTrack.getCurrentLyricIndex(currentTime);
+        if (centerLyricIndex < 0) {
+            return List.of();
+        }
+
+        currentLyricIndex = centerLyricIndex;
+
+        int firstLyricIndex = Math.max(0, centerLyricIndex - surroundingLineCount);
+        int lastLyricIndex = Math.min(currentTrack.getLyricCount() - 1, centerLyricIndex + surroundingLineCount);
+        List<LrcLyric> lyricContext = new ArrayList<>();
+        for (int lyricIndex = firstLyricIndex; lyricIndex <= lastLyricIndex; lyricIndex++) {
+            lyricContext.add(currentTrack.getLyrics().get(lyricIndex));
+        }
+        return lyricContext;
     }
 
     /**

@@ -4,6 +4,7 @@ import com.eostrehold.lyriclive.client.core.PlaybackController;
 import com.eostrehold.lyriclive.client.core.TimelineManager;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.display.LyricRenderer;
+import com.eostrehold.lyriclive.client.lrc.LrcLyric;
 import com.eostrehold.lyriclive.client.sender.ChatSender;
 import com.eostrehold.lyriclive.client.sender.CommandSender;
 import net.minecraft.client.Minecraft;
@@ -36,6 +37,10 @@ public class MainScreen extends Screen {
     private Button settingsButton;
     private Button loadLyricButton;
     private Button reloadLyricButton;
+    private Button seekBackwardTenSecondsButton;
+    private Button seekBackwardOneSecondButton;
+    private Button seekForwardOneSecondButton;
+    private Button seekForwardTenSecondsButton;
 
     private Path currentLyricFile;
     private List<Path> discoveredLyricFiles = new ArrayList<>();
@@ -98,6 +103,27 @@ public class MainScreen extends Screen {
                 button -> openSettings()
         ).bounds(this.width - 60, 10, 50, 20).build();
 
+        int seekButtonY = startY - 25;
+        seekBackwardTenSecondsButton = Button.builder(
+                Component.literal("-10s"),
+                button -> adjustPlaybackTime(-10_000L)
+        ).bounds(startX, seekButtonY, 55, buttonHeight).build();
+
+        seekBackwardOneSecondButton = Button.builder(
+                Component.literal("-1s"),
+                button -> adjustPlaybackTime(-1_000L)
+        ).bounds(startX + 65, seekButtonY, 55, buttonHeight).build();
+
+        seekForwardOneSecondButton = Button.builder(
+                Component.literal("+1s"),
+                button -> adjustPlaybackTime(1_000L)
+        ).bounds(startX + 130, seekButtonY, 55, buttonHeight).build();
+
+        seekForwardTenSecondsButton = Button.builder(
+                Component.literal("+10s"),
+                button -> adjustPlaybackTime(10_000L)
+        ).bounds(startX + 195, seekButtonY, 55, buttonHeight).build();
+
         addRenderableWidget(playPauseButton);
         addRenderableWidget(stopButton);
         addRenderableWidget(chatSendButton);
@@ -105,6 +131,12 @@ public class MainScreen extends Screen {
         addRenderableWidget(loadLyricButton);
         addRenderableWidget(reloadLyricButton);
         addRenderableWidget(settingsButton);
+        addRenderableWidget(seekBackwardTenSecondsButton);
+        addRenderableWidget(seekBackwardOneSecondButton);
+        addRenderableWidget(seekForwardOneSecondButton);
+        addRenderableWidget(seekForwardTenSecondsButton);
+
+        addLyricFileButtons();
     }
 
     @Override
@@ -120,10 +152,17 @@ public class MainScreen extends Screen {
         guiGraphics.text(minecraftFont, titleStr, (this.width - titleWidth) / 2, 10, 0xFFFFFF, true);
 
         if (timelineManager.hasLyrics()) {
-            String currentLyric = timelineManager.getCurrentLyricText();
-            if (currentLyric != null && !currentLyric.isEmpty()) {
-                int lyricWidth = minecraftFont.width(currentLyric);
-                guiGraphics.text(minecraftFont, currentLyric, (this.width - lyricWidth) / 2, 80, 0xFFFFFF, true);
+            List<LrcLyric> lyricContext = timelineManager.getCurrentLyricContext(2);
+            LrcLyric currentLyric = timelineManager.getCurrentLyric();
+            int contextStartY = 60;
+            int lineHeight = 11;
+            for (int contextIndex = 0; contextIndex < lyricContext.size(); contextIndex++) {
+                LrcLyric contextLyric = lyricContext.get(contextIndex);
+                boolean isCurrentLine = contextLyric.equals(currentLyric);
+                int lyricColor = isCurrentLine ? 0xFFFFFF : 0xAAAAAA;
+                String lyricText = contextLyric.getText();
+                int lyricWidth = minecraftFont.width(lyricText);
+                guiGraphics.text(minecraftFont, lyricText, (this.width - lyricWidth) / 2, contextStartY + contextIndex * lineHeight, lyricColor, true);
             }
 
             String progress = String.format("歌词进度: %d/%d",
@@ -195,11 +234,46 @@ public class MainScreen extends Screen {
                 statusMessage = "未找到歌词：请放入 lyriclive/*.lrc";
                 return;
             }
+            statusMessage = "已刷新歌词列表，请点击下方文件名加载";
+            Minecraft.getInstance().setScreen(this);
+        } catch (IOException exception) {
+            statusMessage = "加载歌词失败: " + exception.getMessage();
+            exception.printStackTrace();
+        }
+    }
 
-            selectedLyricFileIndex = (selectedLyricFileIndex + 1) % discoveredLyricFiles.size();
-            Path selectedLyricFile = discoveredLyricFiles.get(selectedLyricFileIndex);
+    private void addLyricFileButtons() {
+        try {
+            refreshLyricFiles();
+        } catch (IOException exception) {
+            statusMessage = "读取歌词目录失败: " + exception.getMessage();
+            exception.printStackTrace();
+            return;
+        }
+
+        int visibleFileCount = Math.min(discoveredLyricFiles.size(), 6);
+        int fileButtonX = this.width / 2 - 130;
+        int fileButtonY = 55;
+        int fileButtonWidth = 260;
+        for (int fileIndex = 0; fileIndex < visibleFileCount; fileIndex++) {
+            Path lyricFile = discoveredLyricFiles.get(fileIndex);
+            Button fileButton = Button.builder(
+                    Component.literal(lyricFile.getFileName().toString()),
+                    button -> loadSelectedLyricFile(lyricFile)
+            ).bounds(fileButtonX, fileButtonY + fileIndex * 21, fileButtonWidth, 18).build();
+            addRenderableWidget(fileButton);
+        }
+
+        if (discoveredLyricFiles.size() > visibleFileCount) {
+            statusMessage = "仅显示前 " + visibleFileCount + " 个歌词文件，请按文件名排序选择";
+        }
+    }
+
+    private void loadSelectedLyricFile(Path selectedLyricFile) {
+        try {
             timelineManager.loadLyricFile(selectedLyricFile);
             currentLyricFile = selectedLyricFile;
+            selectedLyricFileIndex = discoveredLyricFiles.indexOf(selectedLyricFile);
             statusMessage = "已加载: " + selectedLyricFile.getFileName();
         } catch (IOException exception) {
             statusMessage = "加载歌词失败: " + exception.getMessage();
@@ -224,10 +298,17 @@ public class MainScreen extends Screen {
         if (currentLyricFile != null) {
             try {
                 timelineManager.reloadLyrics(currentLyricFile);
+                statusMessage = "已重新加载: " + currentLyricFile.getFileName();
             } catch (Exception e) {
+                statusMessage = "重新加载失败: " + e.getMessage();
                 e.printStackTrace();
             }
         }
+    }
+
+    private void adjustPlaybackTime(long deltaMillis) {
+        playbackController.seek(deltaMillis);
+        statusMessage = "当前时间: " + formatTime(playbackController.getCurrentTimeMillis());
     }
 
     private void openSettings() {
