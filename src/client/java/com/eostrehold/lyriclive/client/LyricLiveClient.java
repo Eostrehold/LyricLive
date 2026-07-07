@@ -114,6 +114,7 @@ public class LyricLiveClient implements ClientModInitializer {
     }
 
     private void manualSendCurrentLyric() {
+        if (chatSender.isEnabled()) return; // 自动发送开启时禁用手动发送
         if (!timelineManager.hasLyrics()) return;
         var lyrics = timelineManager.getCurrentTrack().getLyrics();
         if (lyrics.isEmpty()) return;
