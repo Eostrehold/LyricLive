@@ -3,15 +3,13 @@ package com.eostrehold.lyriclive.client.gui;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.sender.ChatSender;
 import com.eostrehold.lyriclive.client.sender.CommandSender;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-/**
- * LyricLive 设置界面，管理显示和发送配置。
- */
 public class SettingsScreen extends Screen {
     private final DisplayConfig displayConfig;
     private final ChatSender chatSender;
@@ -101,7 +99,7 @@ public class SettingsScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, DeltaTracker deltaTracker) {
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 10, 0xFFFFFF);
 
@@ -116,7 +114,7 @@ public class SettingsScreen extends Screen {
         guiGraphics.drawString(this.font, "透明度 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 4 * rowHeight + 5, 0xFFFFFF);
         guiGraphics.drawString(this.font, "指令模板:", centerX - 100 - 80 - 5, startY + 5 * rowHeight + 5, 0xFFFFFF);
 
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.render(guiGraphics, mouseX, mouseY, deltaTracker);
     }
 
     @Override

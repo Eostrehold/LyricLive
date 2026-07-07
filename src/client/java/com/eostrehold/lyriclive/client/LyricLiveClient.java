@@ -11,7 +11,7 @@ import com.eostrehold.lyriclive.client.sender.CommandSender;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -67,35 +67,35 @@ public class LyricLiveClient implements ClientModInitializer {
     }
 
     private void registerKeyBindings() {
-        openGuiKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        openGuiKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.lyriclive.open_gui",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_L,
                 CATEGORY
         ));
 
-        togglePlayPauseKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        togglePlayPauseKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.lyriclive.toggle_play_pause",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_P,
                 CATEGORY
         ));
 
-        stopKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        stopKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.lyriclive.stop",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_O,
                 CATEGORY
         ));
 
-        sendLyricKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        sendLyricKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.lyriclive.send_lyric",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_K,
                 CATEGORY
         ));
 
-        toggleAutoSendKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        toggleAutoSendKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.lyriclive.toggle_auto_send",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_J,

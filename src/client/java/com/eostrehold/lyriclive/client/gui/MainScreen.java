@@ -6,6 +6,7 @@ import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.display.LyricRenderer;
 import com.eostrehold.lyriclive.client.sender.ChatSender;
 import com.eostrehold.lyriclive.client.sender.CommandSender;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -13,9 +14,6 @@ import net.minecraft.network.chat.Component;
 
 import java.nio.file.Path;
 
-/**
- * LyricLive 主界面，包含播放控制、歌词显示和发送设置。
- */
 public class MainScreen extends Screen {
     private final PlaybackController playbackController;
     private final TimelineManager timelineManager;
@@ -100,7 +98,7 @@ public class MainScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, DeltaTracker deltaTracker) {
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 10, 0xFFFFFF);
 
@@ -128,7 +126,7 @@ public class MainScreen extends Screen {
         };
         guiGraphics.drawString(this.font, "状态: " + stateText, 10, 90, 0xFFFFFF);
 
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.render(guiGraphics, mouseX, mouseY, deltaTracker);
     }
 
     @Override
