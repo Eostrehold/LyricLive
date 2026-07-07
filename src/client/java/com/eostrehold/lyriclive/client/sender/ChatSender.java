@@ -58,10 +58,6 @@ public class ChatSender {
      * @return 是否成功发送
      */
     public boolean forceSendLyric(String lyricText) {
-        if (!enabled) {
-            return false;
-        }
-
         if (lyricText == null || lyricText.isEmpty()) {
             return false;
         }

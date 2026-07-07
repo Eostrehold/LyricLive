@@ -35,24 +35,23 @@ public class SettingsScreen extends Screen {
         super.init();
         Font f = Minecraft.getInstance().font;
 
-        int col1 = 16;  // 标签列
-        int col2 = 150; // 输入框列
-        int col3 = 220; // 备注列
-        int y0 = 30;
-        int rh = 26;
+        int col1 = 16;
+        int col2 = 150;
+        int y0 = 32;
+        int rh = 30;
 
-        posXBox     = newBox(f, col2, y0, 50, 20, String.valueOf(displayConfig.getPositionX()));
-        posYBox     = newBox(f, col2, y0 + rh, 50, 20, String.valueOf(displayConfig.getPositionY()));
-        fontSizeBox = newBox(f, col2, y0 + 2*rh, 50, 20, String.valueOf(displayConfig.getFontSize()));
-        colorBox    = newBox(f, col2, y0 + 3*rh, 60, 20, String.format("%06X", displayConfig.getFontColor()));
-        opacityBox  = newBox(f, col2, y0 + 4*rh, 50, 20, String.valueOf(displayConfig.getOpacity()));
-        cmdTemplateBox = newBox(f, col2, y0 + 5*rh, 160, 20, commandSender.getCommandTemplate());
+        posXBox     = newBox(f, col2, y0, 50, 18, String.valueOf(displayConfig.getPositionX()));
+        posYBox     = newBox(f, col2, y0 + rh, 50, 18, String.valueOf(displayConfig.getPositionY()));
+        fontSizeBox = newBox(f, col2, y0 + 2*rh, 50, 18, String.valueOf(displayConfig.getFontSize()));
+        colorBox    = newBox(f, col2, y0 + 3*rh, 60, 18, String.format("%06X", displayConfig.getFontColor()));
+        opacityBox  = newBox(f, col2, y0 + 4*rh, 50, 18, String.valueOf(displayConfig.getOpacity()));
+        cmdTemplateBox = newBox(f, col2, y0 + 5*rh, 160, 18, commandSender.getCommandTemplate());
         cmdTemplateBox.setMaxLength(100);
 
-        int toggleY = y0 + 7 * rh;
+        int toggleY = y0 + 7 * rh + 4;
         shadowToggle   = newToggle(col1,      toggleY, "阴影", displayConfig.isShadowEnabled(), this::toggleShadow);
-        centeredToggle = newToggle(col1 + 90,  toggleY, "居中", displayConfig.isCentered(), this::toggleCentered);
-        fadeToggle     = newToggle(col1 + 180, toggleY, "渐变", displayConfig.isFadeInOutEnabled(), this::toggleFade);
+        centeredToggle = newToggle(col1 + 100, toggleY, "居中", displayConfig.isCentered(), this::toggleCentered);
+        fadeToggle     = newToggle(col1 + 200, toggleY, "渐变", displayConfig.isFadeInOutEnabled(), this::toggleFade);
 
         Button doneBtn = Button.builder(Component.literal("保存并返回"), b -> onClose())
                 .bounds(this.width / 2 - 50, this.height - 30, 100, 20).build();
@@ -62,52 +61,44 @@ public class SettingsScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float pt) {
         Font f = Minecraft.getInstance().font;
+        int sw = this.width, sh = this.height;
 
-        // 背景
-        g.fill(0, 0, this.width, this.height, 0xC0101010);
+        // 全屏半透明黑底
+        g.fill(0, 0, sw, sh, 0xC0101010);
 
         // 标题
         String title = "LyricLive Settings";
-        g.text(f, title, this.width / 2 - f.width(title) / 2, 8, 0xFFFF55, true);
+        g.text(f, title, sw / 2 - f.width(title) / 2, 8, 0xFFFF55, true);
 
-        // 控件绘制
+        // 控件（输入框、按钮）
         super.extractRenderState(g, mx, my, pt);
 
-        // ---- 标签 ----
-        int col1 = 16, col3 = 220;
-        int y0 = 30, rh = 26;
+        // ---- 标签行 ----
+        int col1 = 16, col2 = 150, y0 = 32, rh = 30;
 
         int row = 0;
-        drawLabel(g, f, "X Position (0.0~1.0)", col1, y0 + row * rh);
-        drawNote(g, f, "0.5=center", col3, y0 + row * rh);
-        row++;
-
-        drawLabel(g, f, "Y Position (0.0~1.0)", col1, y0 + row * rh);
-        drawNote(g, f, "0.8=bottom", col3, y0 + row * rh);
-        row++;
-
-        drawLabel(g, f, "Font Size (8~64)", col1, y0 + row * rh);
-        drawNote(g, f, "pixel", col3, y0 + row * rh);
-        row++;
-
-        drawLabel(g, f, "Font Color (RGB hex)", col1, y0 + row * rh);
-        drawNote(g, f, "FFFFFF=white", col3, y0 + row * rh);
-        row++;
-
-        drawLabel(g, f, "Opacity (0.0~1.0)", col1, y0 + row * rh);
-        drawNote(g, f, "1.0=opaque", col3, y0 + row * rh);
-        row++;
-
-        drawLabel(g, f, "Command Template", col1, y0 + row * rh);
-        drawNote(g, f, "{lyric}=lyrics", col3, y0 + row * rh);
+        drawRow(g, f, "X Position (0.0~1.0)",      "屏幕宽度比例",    col1, y0 + row * rh);
+        drawRow(g, f, "Y Position (0.0~1.0)",      "屏幕高度比例",    col1, y0 + ++row * rh);
+        drawRow(g, f, "Font Size (8~64)",          "像素大小",        col1, y0 + ++row * rh);
+        drawRow(g, f, "Font Color (RGB hex)",      "FFFFFF=白色",     col1, y0 + ++row * rh);
+        drawRow(g, f, "Opacity (0.0~1.0)",         "1.0=完全不透明",  col1, y0 + ++row * rh);
+        drawRow(g, f, "Command Template",          "{lyric}=歌词文本", col1, y0 + ++row * rh);
     }
 
-    private void drawLabel(GuiGraphicsExtractor g, Font f, String text, int x, int y) {
-        g.text(f, text, x, y + 5, 0xFFFFFF, true);
-    }
+    /**
+     * 绘制一行：左侧白字标签 + 右侧带深色背景的说明文字
+     */
+    private void drawRow(GuiGraphicsExtractor g, Font f, String label, String note, int x, int y) {
+        // 左侧标签（白字）
+        g.text(f, label, x, y + 6, 0xFFFFFF, true);
 
-    private void drawNote(GuiGraphicsExtractor g, Font f, String text, int x, int y) {
-        g.text(f, text, x, y + 5, 0x888888, true);
+        // 右侧说明文字（带深色背景）
+        int noteX = 220;
+        int noteY = y + 6;
+        int noteW = f.width(note) + 8;
+        int noteH = f.lineHeight + 4;
+        g.fill(noteX - 2, noteY - 1, noteX + noteW - 4, noteY + noteH - 2, 0xAA222222);
+        g.text(f, note, noteX + 2, noteY + 1, 0xBBBBBB, false);
     }
 
     private EditBox newBox(Font f, int x, int y, int w, int h, String val) {
