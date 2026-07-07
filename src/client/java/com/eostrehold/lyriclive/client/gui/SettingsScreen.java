@@ -3,7 +3,6 @@ package com.eostrehold.lyriclive.client.gui;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.sender.ChatSender;
 import com.eostrehold.lyriclive.client.sender.CommandSender;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -99,22 +98,25 @@ public class SettingsScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, DeltaTracker deltaTracker) {
+    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
-        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 10, 0xFFFFFF);
+
+        String titleStr = this.title.getString();
+        int titleWidth = this.font.width(titleStr);
+        guiGraphics.text(this.font, titleStr, (this.width - titleWidth) / 2, 10, 0xFFFFFF, true);
 
         int centerX = this.width / 2;
         int startY = 30;
         int rowHeight = 30;
 
-        guiGraphics.drawString(this.font, "X 位置 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 5, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "Y 位置 (0.0-1.0):", centerX - 100 - 80 - 5, startY + rowHeight + 5, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "字体大小 (8-64):", centerX - 100 - 80 - 5, startY + 2 * rowHeight + 5, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "字体颜色 (十六进制):", centerX - 100 - 80 - 5, startY + 3 * rowHeight + 5, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "透明度 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 4 * rowHeight + 5, 0xFFFFFF);
-        guiGraphics.drawString(this.font, "指令模板:", centerX - 100 - 80 - 5, startY + 5 * rowHeight + 5, 0xFFFFFF);
+        guiGraphics.text(this.font, "X 位置 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 5, 0xFFFFFF, true);
+        guiGraphics.text(this.font, "Y 位置 (0.0-1.0):", centerX - 100 - 80 - 5, startY + rowHeight + 5, 0xFFFFFF, true);
+        guiGraphics.text(this.font, "字体大小 (8-64):", centerX - 100 - 80 - 5, startY + 2 * rowHeight + 5, 0xFFFFFF, true);
+        guiGraphics.text(this.font, "字体颜色 (十六进制):", centerX - 100 - 80 - 5, startY + 3 * rowHeight + 5, 0xFFFFFF, true);
+        guiGraphics.text(this.font, "透明度 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 4 * rowHeight + 5, 0xFFFFFF, true);
+        guiGraphics.text(this.font, "指令模板:", centerX - 100 - 80 - 5, startY + 5 * rowHeight + 5, 0xFFFFFF, true);
 
-        super.render(guiGraphics, mouseX, mouseY, deltaTracker);
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override

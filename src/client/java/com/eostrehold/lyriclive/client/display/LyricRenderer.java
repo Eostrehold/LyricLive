@@ -3,10 +3,8 @@ package com.eostrehold.lyriclive.client.display;
 import com.eostrehold.lyriclive.client.core.TimelineManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 
-/**
- * 歌词渲染器，负责在屏幕上绘制歌词。
- */
 public class LyricRenderer {
     private final TimelineManager timelineManager;
     private final DisplayConfig config;
@@ -18,10 +16,6 @@ public class LyricRenderer {
         this.config = config;
     }
 
-    /**
-     * 渲染歌词（每帧调用）
-     * @param guiGraphics GUI 图形上下文
-     */
     public void render(GuiGraphicsExtractor guiGraphics) {
         if (!timelineManager.hasLyrics()) {
             return;
@@ -32,7 +26,6 @@ public class LyricRenderer {
             return;
         }
 
-        // 检测歌词变化
         if (!lyricText.equals(lastLyricText)) {
             lastLyricText = lyricText;
             lastLyricChangeTime = System.currentTimeMillis();
@@ -42,11 +35,9 @@ public class LyricRenderer {
         int screenWidth = client.getWindow().getGuiScaledWidth();
         int screenHeight = client.getWindow().getGuiScaledHeight();
 
-        // 计算位置
         int x = config.getPixelX(screenWidth);
         int y = config.getPixelY(screenHeight);
 
-        // 计算透明度（考虑淡入淡出效果）
         float alpha = config.getOpacity();
         if (config.isFadeInOutEnabled()) {
             long elapsed = System.currentTimeMillis() - lastLyricChangeTime;
@@ -55,15 +46,14 @@ public class LyricRenderer {
             }
         }
 
-        // 获取带透明度的颜色 (ARGB格式)
         int alphaValue = (int) (alpha * 255) & 0xFF;
         int fontColor = (alphaValue << 24) | (config.getFontColor() & 0x00FFFFFF);
 
-        // 绘制歌词文本
         if (config.isCentered()) {
-            guiGraphics.drawCenteredString(client.font, lyricText, x, y, fontColor);
+            int textWidth = client.font.width(lyricText);
+            guiGraphics.text(client.font, lyricText, x - textWidth / 2, y, fontColor, config.isShadowEnabled());
         } else {
-            guiGraphics.drawString(client.font, lyricText, x, y, fontColor, config.isShadowEnabled());
+            guiGraphics.text(client.font, lyricText, x, y, fontColor, config.isShadowEnabled());
         }
     }
 

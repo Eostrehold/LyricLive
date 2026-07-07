@@ -6,7 +6,6 @@ import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.display.LyricRenderer;
 import com.eostrehold.lyriclive.client.sender.ChatSender;
 import com.eostrehold.lyriclive.client.sender.CommandSender;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -98,25 +97,32 @@ public class MainScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, DeltaTracker deltaTracker) {
+    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
-        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 10, 0xFFFFFF);
+
+        // 居中绘制标题
+        String titleStr = this.title.getString();
+        int titleWidth = this.font.width(titleStr);
+        guiGraphics.text(this.font, titleStr, (this.width - titleWidth) / 2, 10, 0xFFFFFF, true);
 
         if (timelineManager.hasLyrics()) {
             String currentLyric = timelineManager.getCurrentLyricText();
             if (currentLyric != null && !currentLyric.isEmpty()) {
-                guiGraphics.drawCenteredString(this.font, currentLyric, this.width / 2, 80, 0xFFFFFF);
+                int lyricWidth = this.font.width(currentLyric);
+                guiGraphics.text(this.font, currentLyric, (this.width - lyricWidth) / 2, 80, 0xFFFFFF, true);
             }
 
             String progress = String.format("歌词进度: %d/%d",
                     timelineManager.getCurrentLyricIndex() + 1,
                     timelineManager.getLyricCount());
-            guiGraphics.drawString(this.font, progress, 10, 50, 0xFFFFFF);
+            guiGraphics.text(this.font, progress, 10, 50, 0xFFFFFF, true);
 
             String timeStr = formatTime(playbackController.getCurrentTimeMillis());
-            guiGraphics.drawString(this.font, "时间: " + timeStr, 10, 70, 0xFFFFFF);
+            guiGraphics.text(this.font, "时间: " + timeStr, 10, 70, 0xFFFFFF, true);
         } else {
-            guiGraphics.drawCenteredString(this.font, "未加载歌词文件", this.width / 2, 80, 0xAAAAAA);
+            String noLyric = "未加载歌词文件";
+            int noLyricWidth = this.font.width(noLyric);
+            guiGraphics.text(this.font, noLyric, (this.width - noLyricWidth) / 2, 80, 0xAAAAAA, true);
         }
 
         String stateText = switch (playbackController.getState()) {
@@ -124,9 +130,9 @@ public class MainScreen extends Screen {
             case PAUSED -> "已暂停";
             case STOPPED -> "已停止";
         };
-        guiGraphics.drawString(this.font, "状态: " + stateText, 10, 90, 0xFFFFFF);
+        guiGraphics.text(this.font, "状态: " + stateText, 10, 90, 0xFFFFFF, true);
 
-        super.render(guiGraphics, mouseX, mouseY, deltaTracker);
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
