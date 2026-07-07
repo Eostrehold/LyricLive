@@ -6,6 +6,8 @@ import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.display.LyricRenderer;
 import com.eostrehold.lyriclive.client.sender.ChatSender;
 import com.eostrehold.lyriclive.client.sender.CommandSender;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -100,30 +102,32 @@ public class MainScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
+        Font minecraftFont = Minecraft.getInstance().font;
+
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
 
         String titleStr = this.title.getString();
-        int titleWidth = this.font.width(titleStr);
-        guiGraphics.text(this.font, titleStr, (this.width - titleWidth) / 2, 10, 0xFFFFFF, true);
+        int titleWidth = minecraftFont.width(titleStr);
+        guiGraphics.text(minecraftFont, titleStr, (this.width - titleWidth) / 2, 10, 0xFFFFFF, true);
 
         if (timelineManager.hasLyrics()) {
             String currentLyric = timelineManager.getCurrentLyricText();
             if (currentLyric != null && !currentLyric.isEmpty()) {
-                int lyricWidth = this.font.width(currentLyric);
-                guiGraphics.text(this.font, currentLyric, (this.width - lyricWidth) / 2, 80, 0xFFFFFF, true);
+                int lyricWidth = minecraftFont.width(currentLyric);
+                guiGraphics.text(minecraftFont, currentLyric, (this.width - lyricWidth) / 2, 80, 0xFFFFFF, true);
             }
 
             String progress = String.format("歌词进度: %d/%d",
                     timelineManager.getCurrentLyricIndex() + 1,
                     timelineManager.getLyricCount());
-            guiGraphics.text(this.font, progress, 10, 50, 0xFFFFFF, true);
+            guiGraphics.text(minecraftFont, progress, 10, 50, 0xFFFFFF, true);
 
             String timeStr = formatTime(playbackController.getCurrentTimeMillis());
-            guiGraphics.text(this.font, "时间: " + timeStr, 10, 70, 0xFFFFFF, true);
+            guiGraphics.text(minecraftFont, "时间: " + timeStr, 10, 70, 0xFFFFFF, true);
         } else {
             String noLyric = "未加载歌词文件";
-            int noLyricWidth = this.font.width(noLyric);
-            guiGraphics.text(this.font, noLyric, (this.width - noLyricWidth) / 2, 80, 0xAAAAAA, true);
+            int noLyricWidth = minecraftFont.width(noLyric);
+            guiGraphics.text(minecraftFont, noLyric, (this.width - noLyricWidth) / 2, 80, 0xAAAAAA, true);
         }
 
         String stateText = switch (playbackController.getState()) {
@@ -131,7 +135,7 @@ public class MainScreen extends Screen {
             case PAUSED -> "已暂停";
             case STOPPED -> "已停止";
         };
-        guiGraphics.text(this.font, "状态: " + stateText, 10, 90, 0xFFFFFF, true);
+        guiGraphics.text(minecraftFont, "状态: " + stateText, 10, 90, 0xFFFFFF, true);
     }
 
     @Override

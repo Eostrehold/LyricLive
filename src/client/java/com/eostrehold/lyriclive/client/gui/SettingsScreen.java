@@ -3,6 +3,8 @@ package com.eostrehold.lyriclive.client.gui;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.sender.ChatSender;
 import com.eostrehold.lyriclive.client.sender.CommandSender;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -39,6 +41,8 @@ public class SettingsScreen extends Screen {
     protected void init() {
         super.init();
 
+        Font minecraftFont = Minecraft.getInstance().font;
+
         int centerX = this.width / 2;
         int startY = 30;
         int rowHeight = 30;
@@ -46,22 +50,22 @@ public class SettingsScreen extends Screen {
         int inputWidth = 80;
         int buttonWidth = 80;
 
-        positionXBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY, inputWidth, 20, Component.literal("X 位置"));
+        positionXBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY, inputWidth, 20, Component.literal("X 位置"));
         positionXBox.setValue(String.valueOf(displayConfig.getPositionX()));
 
-        positionYBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + rowHeight, inputWidth, 20, Component.literal("Y 位置"));
+        positionYBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY + rowHeight, inputWidth, 20, Component.literal("Y 位置"));
         positionYBox.setValue(String.valueOf(displayConfig.getPositionY()));
 
-        fontSizeBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 2 * rowHeight, inputWidth, 20, Component.literal("字体大小"));
+        fontSizeBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY + 2 * rowHeight, inputWidth, 20, Component.literal("字体大小"));
         fontSizeBox.setValue(String.valueOf(displayConfig.getFontSize()));
 
-        colorBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 3 * rowHeight, inputWidth, 20, Component.literal("字体颜色"));
+        colorBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY + 3 * rowHeight, inputWidth, 20, Component.literal("字体颜色"));
         colorBox.setValue(String.format("%06X", displayConfig.getFontColor()));
 
-        opacityBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 4 * rowHeight, inputWidth, 20, Component.literal("透明度"));
+        opacityBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY + 4 * rowHeight, inputWidth, 20, Component.literal("透明度"));
         opacityBox.setValue(String.valueOf(displayConfig.getOpacity()));
 
-        commandTemplateBox = new EditBox(this.font, centerX - labelWidth - inputWidth, startY + 5 * rowHeight, inputWidth * 2, 20, Component.literal("指令模板"));
+        commandTemplateBox = new EditBox(minecraftFont, centerX - labelWidth - inputWidth, startY + 5 * rowHeight, inputWidth * 2, 20, Component.literal("指令模板"));
         commandTemplateBox.setValue(commandSender.getCommandTemplate());
         commandTemplateBox.setMaxLength(100);
 
@@ -101,22 +105,24 @@ public class SettingsScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(guiGraphics, mouseX, mouseY, partialTick);
 
+        Font minecraftFont = Minecraft.getInstance().font;
+
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
 
         String titleStr = this.title.getString();
-        int titleWidth = this.font.width(titleStr);
-        guiGraphics.text(this.font, titleStr, (this.width - titleWidth) / 2, 10, 0xFFFFFF, true);
+        int titleWidth = minecraftFont.width(titleStr);
+        guiGraphics.text(minecraftFont, titleStr, (this.width - titleWidth) / 2, 10, 0xFFFFFF, true);
 
         int centerX = this.width / 2;
         int startY = 30;
         int rowHeight = 30;
 
-        guiGraphics.text(this.font, "X 位置 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 5, 0xFFFFFF, true);
-        guiGraphics.text(this.font, "Y 位置 (0.0-1.0):", centerX - 100 - 80 - 5, startY + rowHeight + 5, 0xFFFFFF, true);
-        guiGraphics.text(this.font, "字体大小 (8-64):", centerX - 100 - 80 - 5, startY + 2 * rowHeight + 5, 0xFFFFFF, true);
-        guiGraphics.text(this.font, "字体颜色 (十六进制):", centerX - 100 - 80 - 5, startY + 3 * rowHeight + 5, 0xFFFFFF, true);
-        guiGraphics.text(this.font, "透明度 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 4 * rowHeight + 5, 0xFFFFFF, true);
-        guiGraphics.text(this.font, "指令模板:", centerX - 100 - 80 - 5, startY + 5 * rowHeight + 5, 0xFFFFFF, true);
+        guiGraphics.text(minecraftFont, "X 位置 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 5, 0xFFFFFF, true);
+        guiGraphics.text(minecraftFont, "Y 位置 (0.0-1.0):", centerX - 100 - 80 - 5, startY + rowHeight + 5, 0xFFFFFF, true);
+        guiGraphics.text(minecraftFont, "字体大小 (8-64):", centerX - 100 - 80 - 5, startY + 2 * rowHeight + 5, 0xFFFFFF, true);
+        guiGraphics.text(minecraftFont, "字体颜色 (十六进制):", centerX - 100 - 80 - 5, startY + 3 * rowHeight + 5, 0xFFFFFF, true);
+        guiGraphics.text(minecraftFont, "透明度 (0.0-1.0):", centerX - 100 - 80 - 5, startY + 4 * rowHeight + 5, 0xFFFFFF, true);
+        guiGraphics.text(minecraftFont, "指令模板:", centerX - 100 - 80 - 5, startY + 5 * rowHeight + 5, 0xFFFFFF, true);
     }
 
     @Override
