@@ -1,25 +1,25 @@
-# LyricLive 模组自动构建脚本
-# 在 push 到 main 分支或创建 PR 时自动构建
-# 手动运行 workflow 时，可选择是否发布到 GitHub Releases
+# LyricLive 模组自动构建
+# push/PR 仅当涉及模组源码变化时构建
+# 手动触发始终构建
 
-name: Build and Release
+name: Build
 
 on:
   push:
     branches: [ main, master ]
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
   pull_request:
     branches: [ main, master ]
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
   workflow_dispatch:
-    inputs:
-      publish_release:
-        description: '是否发布 GitHub Release'
-        required: true
-        type: boolean
-        default: false
-      release_version:
-        description: 'Release 版本号，例如 1.0.0（仅 publish_release=true 时使用）'
-        required: false
-        type: string
 
 jobs:
   build:
@@ -61,55 +61,3 @@ jobs:
           name: LyricLive-Linux-Java25
           path: build/libs/*.jar
           if-no-files-found: warn
-
-  release:
-    name: Create Release
-    needs: build
-    runs-on: ubuntu-24.04
-    if: github.event_name == 'workflow_dispatch' && inputs.publish_release
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup JDK
-        uses: actions/setup-java@v5
-        with:
-          java-version: '25'
-          distribution: 'microsoft'
-
-      - name: Build release
-        run: ./gradlew build
-
-      - name: Validate release version
-        run: |
-          if [ -z "${{ inputs.release_version }}" ]; then
-            echo "release_version is required when publish_release=true"
-            exit 1
-          fi
-
-      - name: Get version from input
-        id: get_version
-        run: echo "VERSION=${{ inputs.release_version }}" >> $GITHUB_OUTPUT
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.get_version.outputs.VERSION }}
-          name: LyricLive v${{ steps.get_version.outputs.VERSION }}
-          body: |
-            ## LyricLive v${{ steps.get_version.outputs.VERSION }}
-            
-            ### 安装说明
-            1. 确保已安装 Minecraft 26.1.2
-            2. 确保已安装 Fabric Loader 0.19.3 或更高版本
-            3. 将 `lyriclive-${{ steps.get_version.outputs.VERSION }}.jar` 放入 `.minecraft/mods` 文件夹
-            
-            ### 更新日志
-            - 初始版本发布
-          files: build/libs/*.jar
-          draft: false
-          prerelease: false

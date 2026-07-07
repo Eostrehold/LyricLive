@@ -28,6 +28,11 @@ public class MainScreen extends Screen {
     private static final int BTN_H = 20;
     private static final int LRC_START_Y = 65;
     private static final int LINE_H = 11;
+    private static final int C_WHITE  = 0xFFFFFFFF;
+    private static final int C_YELLOW = 0xFFFFFF55;
+    private static final int C_GRAY   = 0xFFAAAAAA;
+    private static final int C_GREEN  = 0xFF55FF55;
+    private static final int C_RED    = 0xFFFF5555;
 
     private final PlaybackController playbackController;
     private final TimelineManager timelineManager;
@@ -109,41 +114,41 @@ public class MainScreen extends Screen {
         super.extractRenderState(g, mx, my, pt);
 
         // 标题
-        drawCentered(g, f, "LyricLive", this.width / 2, 6, 0xFFFF55);
+        drawCentered(g, f, "LyricLive", this.width / 2, 6, C_YELLOW);
 
         // ---- 右侧信息栏 ----
         int infoX = this.width - 145;
         int infoY = 24;
-        drawLeft(g, f, "状态: " + stateLabel(), infoX, infoY, 0xFFFFFF);
-        drawLeft(g, f, "自动发送: " + (chatSender.isEnabled() ? "开" : "关"), infoX, infoY + 11, chatSender.isEnabled() ? 0x55FF55 : 0xFF5555);
+        drawLeft(g, f, "状态: " + stateLabel(), infoX, infoY, C_WHITE);
+        drawLeft(g, f, "自动发送: " + (chatSender.isEnabled() ? "开" : "关"), infoX, infoY + 11, chatSender.isEnabled() ? C_GREEN : C_RED);
 
         if (timelineManager.hasLyrics()) {
             LyricTrack track = timelineManager.getCurrentTrack();
             String name = currentLyricFile != null ? currentLyricFile.getFileName().toString() : "";
-            if (!name.isEmpty()) drawLeft(g, f, trunc("文件: " + name, 18), infoX, infoY + 24, 0xAAAAAA);
-            if (track.getTitle() != null)  drawLeft(g, f, trunc("歌曲: " + track.getTitle(), 18), infoX, infoY + 36, 0xAAAAAA);
-            if (track.getArtist() != null) drawLeft(g, f, trunc("演唱: " + track.getArtist(), 18), infoX, infoY + 48, 0xAAAAAA);
+            if (!name.isEmpty()) drawLeft(g, f, trunc("文件: " + name, 18), infoX, infoY + 24, C_GRAY);
+            if (track.getTitle() != null)  drawLeft(g, f, trunc("歌曲: " + track.getTitle(), 18), infoX, infoY + 36, C_GRAY);
+            if (track.getArtist() != null) drawLeft(g, f, trunc("演唱: " + track.getArtist(), 18), infoX, infoY + 48, C_GRAY);
 
             long cur = playbackController.getCurrentTimeMillis();
             long total = lastTimestamp();
-            drawLeft(g, f, "进度: " + fmtTime(cur) + " / " + fmtTime(total), infoX, infoY + 62, 0xFFFFFF);
+            drawLeft(g, f, "进度: " + fmtTime(cur) + " / " + fmtTime(total), infoX, infoY + 62, C_WHITE);
         }
 
         // ---- 歌词预览 ----
         if (!timelineManager.hasLyrics()) {
-            drawCentered(g, f, "未加载歌词 — 请在下方点击文件名", this.width / 2, 110, 0xAAAAAA);
+            drawCentered(g, f, "未加载歌词 — 请在下方点击文件名", this.width / 2, 110, C_GRAY);
         } else {
             List<LrcLyric> ctx = timelineManager.getCurrentLyricContext(2);
             LrcLyric cur = timelineManager.getCurrentLyric();
             for (int i = 0; i < ctx.size(); i++) {
                 boolean hl = ctx.get(i).equals(cur);
-                drawCentered(g, f, ctx.get(i).getText(), this.width / 2, LRC_START_Y + i * LINE_H, hl ? 0xFFFFFF : 0x888888);
+                drawCentered(g, f, ctx.get(i).getText(), this.width / 2, LRC_START_Y + i * LINE_H, hl ? C_WHITE : 0xFF888888);
             }
         }
 
         // 状态提示
         if (statusMessage != null && !statusMessage.isEmpty()) {
-            drawLeft(g, f, statusMessage, 10, this.height - 14, 0xAAAAAA);
+            drawLeft(g, f, statusMessage, 10, this.height - 14, C_GRAY);
         }
     }
 

@@ -6,12 +6,19 @@ import com.eostrehold.lyriclive.client.sender.CommandSender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public class SettingsScreen extends Screen {
+    private static final int COL_LABEL = 16;
+    private static final int COL_INPUT = 150;
+    private static final int COL_NOTE  = 240;
+    private static final int ROW_Y0   = 32;
+    private static final int ROW_H    = 28;
+
     private final DisplayConfig displayConfig;
     private final ChatSender chatSender;
     private final CommandSender commandSender;
@@ -35,96 +42,96 @@ public class SettingsScreen extends Screen {
         super.init();
         Font f = Minecraft.getInstance().font;
 
-        int col1 = 16;
-        int col2 = 150;
-        int y0 = 32;
-        int rh = 30;
-
-        posXBox     = newBox(f, col2, y0, 50, 18, String.valueOf(displayConfig.getPositionX()));
-        posYBox     = newBox(f, col2, y0 + rh, 50, 18, String.valueOf(displayConfig.getPositionY()));
-        fontSizeBox = newBox(f, col2, y0 + 2*rh, 50, 18, String.valueOf(displayConfig.getFontSize()));
-        colorBox    = newBox(f, col2, y0 + 3*rh, 60, 18, String.format("%06X", displayConfig.getFontColor()));
-        opacityBox  = newBox(f, col2, y0 + 4*rh, 50, 18, String.valueOf(displayConfig.getOpacity()));
-        cmdTemplateBox = newBox(f, col2, y0 + 5*rh, 160, 18, commandSender.getCommandTemplate());
+        // --- input fields ---
+        posXBox        = box(f, 0, String.valueOf(displayConfig.getPositionX()));
+        posYBox        = box(f, 1, String.valueOf(displayConfig.getPositionY()));
+        fontSizeBox    = box(f, 2, String.valueOf(displayConfig.getFontSize()));
+        colorBox       = box(f, 3, String.format("%06X", displayConfig.getFontColor()));
+        opacityBox     = box(f, 4, String.valueOf(displayConfig.getOpacity()));
+        cmdTemplateBox = box(f, 5, commandSender.getCommandTemplate());
         cmdTemplateBox.setMaxLength(100);
 
-        int toggleY = y0 + 7 * rh + 4;
-        shadowToggle   = newToggle(col1,      toggleY, "阴影", displayConfig.isShadowEnabled(), this::toggleShadow);
-        centeredToggle = newToggle(col1 + 100, toggleY, "居中", displayConfig.isCentered(), this::toggleCentered);
-        fadeToggle     = newToggle(col1 + 200, toggleY, "渐变", displayConfig.isFadeInOutEnabled(), this::toggleFade);
+        // --- toggles ---
+        int ty = ROW_Y0 + 7 * ROW_H + 6;
+        shadowToggle   = tog(f, ty, "阴影", displayConfig.isShadowEnabled(), this::toggleShadow);
+        centeredToggle = tog(f, ty, "居中", displayConfig.isCentered(),      this::toggleCentered);
+        fadeToggle     = tog(f, ty, "渐变", displayConfig.isFadeInOutEnabled(), this::toggleFade);
 
-        Button doneBtn = Button.builder(Component.literal("保存并返回"), b -> onClose())
-                .bounds(this.width / 2 - 50, this.height - 30, 100, 20).build();
-        addRenderableWidget(doneBtn);
+        // done
+        addRenderableWidget(Button.builder(Component.literal("保存并返回"), b -> onClose())
+                .bounds(this.width / 2 - 50, this.height - 28, 100, 20).build());
+
+        // 通过 widget 机制绘制标签（确保可见）
+        addRenderableWidget(new LabelWidget());
     }
 
+    // ---- widget 绘制所有标签 ----
+    private class LabelWidget extends AbstractWidget {
+        LabelWidget() { super(0, 0, 1, 1, Component.empty()); }
+        @Override
+        protected void renderWidget(GuiGraphicsExtractor g, int mx, int my, float pt) {
+            Font f = Minecraft.getInstance().font;
+            for (int i = 0; i < 6; i++) {
+                int y = ROW_Y0 + i * ROW_H + 5;
+                g.text(f, LABELS[i], COL_LABEL, y, C_WHITE, true);
+                int nx = COL_NOTE;
+                int nw = f.width(NOTES[i]);
+                g.fill(nx - 2, y - 1, nx + nw + 4, y + f.lineHeight + 2, 0xAA333333);
+                g.text(f, NOTES[i], nx, y, C_GRAY, false);
+            }
+        }
+    }
+
+    // ---- render: 只处理背景 + 标题 ----
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float pt) {
-        Font f = Minecraft.getInstance().font;
-        int sw = this.width, sh = this.height;
-
-        // 全屏半透明黑底
-        g.fill(0, 0, sw, sh, 0xC0101010);
-
-        // 标题
-        String title = "LyricLive Settings";
-        g.text(f, title, sw / 2 - f.width(title) / 2, 8, 0xFFFF55, true);
-
-        // 控件（输入框、按钮）
+        g.fill(0, 0, this.width, this.height, 0xC0101010);
+        String t = "LyricLive Settings";
+        Minecraft c = Minecraft.getInstance();
+        g.text(c.font, t, this.width / 2 - c.font.width(t) / 2, 8, C_YELLOW, true);
         super.extractRenderState(g, mx, my, pt);
-
-        // ---- 标签行 ----
-        int col1 = 16, col2 = 150, y0 = 32, rh = 30;
-
-        int row = 0;
-        drawRow(g, f, "X Position (0.0~1.0)",      "屏幕宽度比例",    col1, y0 + row * rh);
-        drawRow(g, f, "Y Position (0.0~1.0)",      "屏幕高度比例",    col1, y0 + ++row * rh);
-        drawRow(g, f, "Font Size (8~64)",          "像素大小",        col1, y0 + ++row * rh);
-        drawRow(g, f, "Font Color (RGB hex)",      "FFFFFF=白色",     col1, y0 + ++row * rh);
-        drawRow(g, f, "Opacity (0.0~1.0)",         "1.0=完全不透明",  col1, y0 + ++row * rh);
-        drawRow(g, f, "Command Template",          "{lyric}=歌词文本", col1, y0 + ++row * rh);
     }
 
-    /**
-     * 绘制一行：左侧白字标签 + 右侧带深色背景的说明文字
-     */
-    private void drawRow(GuiGraphicsExtractor g, Font f, String label, String note, int x, int y) {
-        // 左侧标签（白字）
-        g.text(f, label, x, y + 6, 0xFFFFFF, true);
+    // ---- helpers ----
 
-        // 右侧说明文字（带深色背景）
-        int noteX = 220;
-        int noteY = y + 6;
-        int noteW = f.width(note) + 8;
-        int noteH = f.lineHeight + 4;
-        g.fill(noteX - 2, noteY - 1, noteX + noteW - 4, noteY + noteH - 2, 0xAA222222);
-        g.text(f, note, noteX + 2, noteY + 1, 0xBBBBBB, false);
-    }
-
-    private EditBox newBox(Font f, int x, int y, int w, int h, String val) {
-        EditBox box = new EditBox(f, x, y, w, h, Component.empty());
-        box.setValue(val);
-        addRenderableWidget(box);
-        return box;
-    }
-
-    private Button newToggle(int x, int y, String label, boolean value, Runnable action) {
-        Button b = Button.builder(Component.literal(label + ": " + (value ? "ON" : "OFF")), btn -> action.run())
-                .bounds(x, y, 80, 20).build();
+    private EditBox box(Font f, int row, String val) {
+        EditBox b = new EditBox(f, COL_INPUT, ROW_Y0 + row * ROW_H, 50, 18, Component.empty());
+        b.setValue(val);
         addRenderableWidget(b);
         return b;
     }
+
+    private Button tog(Font f, int baseY, String label, boolean on, Runnable action) {
+        int idx = 0;
+        if (label.equals("居中")) idx = 1;
+        if (label.equals("渐变")) idx = 2;
+        int x = COL_LABEL + idx * 90;
+        Button b = Button.builder(Component.literal(label + (on ? ": ON" : ": OFF")), btn -> action.run())
+                .bounds(x, baseY, 80, 20).build();
+        addRenderableWidget(b);
+        return b;
+    }
+
+    private static final String[] LABELS = {
+        "X Position", "Y Position", "Font Size", "Font Color", "Opacity", "Cmd Template"
+    };
+    private static final String[] NOTES = {
+        "0.0~1.0  0.5=center", "0.0~1.0  0.8=bottom",
+        "8~64 px", "hex  FFFFFF=white", "0.0~1.0  1.0=opaque",
+        "{lyric} = lyric text"
+    };
+    private static final int C_WHITE  = 0xFFFFFFFF;
+    private static final int C_YELLOW = 0xFFFFFF55;
+    private static final int C_GRAY   = 0xFFCCCCCC;
 
     private void toggleShadow() {
         displayConfig.setShadowEnabled(!displayConfig.isShadowEnabled());
         shadowToggle.setMessage(Component.literal("阴影: " + (displayConfig.isShadowEnabled() ? "ON" : "OFF")));
     }
-
     private void toggleCentered() {
         displayConfig.setCentered(!displayConfig.isCentered());
         centeredToggle.setMessage(Component.literal("居中: " + (displayConfig.isCentered() ? "ON" : "OFF")));
     }
-
     private void toggleFade() {
         displayConfig.setFadeInOutEnabled(!displayConfig.isFadeInOutEnabled());
         fadeToggle.setMessage(Component.literal("渐变: " + (displayConfig.isFadeInOutEnabled() ? "ON" : "OFF")));
@@ -144,9 +151,7 @@ public class SettingsScreen extends Screen {
             displayConfig.setFontColor(Integer.parseInt(colorBox.getValue().replace("#", ""), 16));
             displayConfig.setOpacity(Float.parseFloat(opacityBox.getValue()));
             commandSender.setCommandTemplate(cmdTemplateBox.getValue());
-        } catch (NumberFormatException e) {
-            // ignore invalid input
-        }
+        } catch (NumberFormatException e) { /* ignore */ }
     }
 
     @Override
