@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "lyriclive",
+	"version": "${version}",
+	"name": "LyricLive",
+	"description": "在 Minecraft 游戏内举办唱歌比赛或演唱会时，为玩家提供歌词显示与歌词发送功能。",
+	"authors": [
+		"Eostrehold"
+	],
+	"contact": {
+		"homepage": "https://github.com/Eostrehold/LyricLive",
+		"sources": "https://github.com/Eostrehold/LyricLive"
+	},
+	"license": "MIT",
+	"icon": "assets/lyriclive/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"main": [
+			"com.eostrehold.lyriclive.LyricLive"
+		],
+		"client": [
+			"com.eostrehold.lyriclive.client.LyricLiveClient"
+		]
+	},
+	"mixins": [
+		"lyriclive.mixins.json",
+		{
+			"config": "lyriclive.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.1.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

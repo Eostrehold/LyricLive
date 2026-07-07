@@ -1,0 +1,8 @@
+{
+  "key.lyriclive.open_gui": "打开 LyricLive 界面",
+  "key.lyriclive.toggle_play_pause": "播放/暂停",
+  "key.lyriclive.stop": "停止",
+  "key.lyriclive.send_lyric": "发送歌词",
+  "key.lyriclive.toggle_auto_send": "切换自动发送",
+  "category.lyriclive.keys": "LyricLive 快捷键"
+}

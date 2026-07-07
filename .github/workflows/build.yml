@@ -1,0 +1,141 @@
+# LyricLive 模组自动构建脚本
+# 在 push 到 main 分支或创建 PR 时自动构建
+# 在创建 tag 时自动发布到 GitHub Releases
+
+name: Build and Release
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-24.04, windows-latest, macos-latest ]
+        java-version: [ '25' ]
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'microsoft'
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Make Gradle wrapper executable (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Capture build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: LyricLive-${{ runner.os }}-Java${{ matrix.java-version }}
+          path: build/libs/*.jar
+          if-no-files-found: warn
+
+  test:
+    name: Run Tests
+    needs: build
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'microsoft'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Run tests
+        run: ./gradlew test
+
+  release:
+    name: Create Release
+    needs: [ build, test ]
+    runs-on: ubuntu-24.04
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'microsoft'
+
+      - name: Build release
+        run: ./gradlew build
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: LyricLive v${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## LyricLive v${{ steps.get_version.outputs.VERSION }}
+            
+            ### 安装说明
+            1. 确保已安装 Minecraft 26.1.2
+            2. 确保已安装 Fabric Loader 0.19.3 或更高版本
+            3. 将 `lyriclive-${{ steps.get_version.outputs.VERSION }}.jar` 放入 `.minecraft/mods` 文件夹
+            
+            ### 更新日志
+            - 初始版本发布
+          files: build/libs/*.jar
+          draft: false
+          prerelease: false
+
+  notify:
+    name: Notify on Failure
+    needs: [ build, test, release ]
+    runs-on: ubuntu-24.04
+    if: failure()
+
+    steps:
+      - name: Send notification
+        run: echo "Build failed! Check the logs for details."
