@@ -13,10 +13,13 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class MainScreen extends Screen {
     private final PlaybackController playbackController;
@@ -35,6 +38,9 @@ public class MainScreen extends Screen {
     private Button reloadLyricButton;
 
     private Path currentLyricFile;
+    private List<Path> discoveredLyricFiles = new ArrayList<>();
+    private int selectedLyricFileIndex = -1;
+    private String statusMessage = "请将 .lrc 文件放入游戏目录的 lyriclive 文件夹";
 
     public MainScreen(PlaybackController playbackController, TimelineManager timelineManager,
                       LyricRenderer lyricRenderer, ChatSender chatSender, CommandSender commandSender,
@@ -133,6 +139,15 @@ public class MainScreen extends Screen {
             guiGraphics.text(minecraftFont, noLyric, (this.width - noLyricWidth) / 2, 80, 0xAAAAAA, true);
         }
 
+        if (currentLyricFile != null) {
+            String fileText = "文件: " + currentLyricFile.getFileName();
+            guiGraphics.text(minecraftFont, fileText, 10, 110, 0xFFFFFF, true);
+        }
+
+        if (statusMessage != null && !statusMessage.isEmpty()) {
+            guiGraphics.text(minecraftFont, statusMessage, 10, 130, 0xAAAAAA, true);
+        }
+
         String stateText = switch (playbackController.getState()) {
             case PLAYING -> "播放中";
             case PAUSED -> "已暂停";
@@ -174,28 +189,35 @@ public class MainScreen extends Screen {
     }
 
     private void openLyricFile() {
-        Thread fileChooserThread = new Thread(() -> {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("选择 LRC 歌词文件");
-            fileChooser.setFileFilter(new FileNameExtensionFilter("LRC 歌词文件 (*.lrc)", "lrc"));
-
-            int selectedResult = fileChooser.showOpenDialog(null);
-            if (selectedResult != JFileChooser.APPROVE_OPTION) {
+        try {
+            refreshLyricFiles();
+            if (discoveredLyricFiles.isEmpty()) {
+                statusMessage = "未找到歌词：请放入 lyriclive/*.lrc";
                 return;
             }
 
-            Path selectedLyricFile = fileChooser.getSelectedFile().toPath();
-            Minecraft.getInstance().execute(() -> {
-                try {
-                    timelineManager.loadLyricFile(selectedLyricFile);
-                    currentLyricFile = selectedLyricFile;
-                } catch (Exception exception) {
-                    exception.printStackTrace();
-                }
-            });
-        }, "LyricLive-LrcFileChooser");
-        fileChooserThread.setDaemon(true);
-        fileChooserThread.start();
+            selectedLyricFileIndex = (selectedLyricFileIndex + 1) % discoveredLyricFiles.size();
+            Path selectedLyricFile = discoveredLyricFiles.get(selectedLyricFileIndex);
+            timelineManager.loadLyricFile(selectedLyricFile);
+            currentLyricFile = selectedLyricFile;
+            statusMessage = "已加载: " + selectedLyricFile.getFileName();
+        } catch (IOException exception) {
+            statusMessage = "加载歌词失败: " + exception.getMessage();
+            exception.printStackTrace();
+        }
+    }
+
+    private void refreshLyricFiles() throws IOException {
+        Path lyricDirectory = Minecraft.getInstance().gameDirectory.toPath().resolve("lyriclive");
+        Files.createDirectories(lyricDirectory);
+
+        try (Stream<Path> lyricPathStream = Files.list(lyricDirectory)) {
+            discoveredLyricFiles = lyricPathStream
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().toLowerCase().endsWith(".lrc"))
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString().toLowerCase()))
+                    .toList();
+        }
     }
 
     private void reloadLyrics() {
