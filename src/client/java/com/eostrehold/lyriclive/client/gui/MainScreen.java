@@ -4,7 +4,6 @@ import com.eostrehold.lyriclive.client.core.PlaybackController;
 import com.eostrehold.lyriclive.client.core.TimelineManager;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.display.LyricRenderer;
-import com.eostrehold.lyriclive.client.lrc.LrcLyric;
 import com.eostrehold.lyriclive.client.lrc.LyricTrack;
 import com.eostrehold.lyriclive.client.sender.ChatSender;
 import com.eostrehold.lyriclive.client.sender.CommandSender;
@@ -26,8 +25,6 @@ import java.util.stream.Stream;
 public class MainScreen extends Screen {
     private static final int BTN_W = 120;
     private static final int BTN_H = 20;
-    private static final int LRC_START_Y = 65;
-    private static final int LINE_H = 11;
     private static final int C_WHITE  = 0xFFFFFFFF;
     private static final int C_YELLOW = 0xFFFFFF55;
     private static final int C_GRAY   = 0xFFAAAAAA;
@@ -45,10 +42,6 @@ public class MainScreen extends Screen {
     private Button chatSendToggleButton;
     private Button settingsButton;
     private Button loadRefreshButton;
-    private Button seekBack10sButton;
-    private Button seekBack1sButton;
-    private Button seekFwd1sButton;
-    private Button seekFwd10sButton;
 
     private List<Path> discoveredLrcFiles = new ArrayList<>();
     private Path currentLyricFile;
@@ -65,47 +58,42 @@ public class MainScreen extends Screen {
         this.commandSender = commandSender;
     }
 
-    // ============================================================= init
-
     @Override
     protected void init() {
         super.init();
 
-        // --- top bar: refresh | settings ---
+        // top bar
         loadRefreshButton = newButton("刷新列表", this.width / 2 - 65, 4, 130, this::refreshFiles);
         settingsButton = newButton("设置", this.width - 55, 4, 50, this::openSettings);
 
-        // --- fine seek row ---
+        // fine seek
         int fineY = this.height - 65;
         int fineX = (this.width - 5 * (BTN_W + 5)) / 2;
-        seekBack10sButton = newButton("-10s", fineX, fineY, BTN_W, () -> seek(-10_000));
+        newButton("-10s", fineX, fineY, BTN_W, () -> seek(-10_000));
         fineX += BTN_W + 5;
-        seekBack1sButton  = newButton("-1s",  fineX, fineY, BTN_W, () -> seek(-1_000));
+        newButton("-1s",  fineX, fineY, BTN_W, () -> seek(-1_000));
         fineX += BTN_W + 5;
-        newButton("◇", fineX, fineY, BTN_W, () -> {}); // 占位
+        newButton("◇",    fineX, fineY, BTN_W, () -> {});
         fineX += BTN_W + 5;
-        seekFwd1sButton   = newButton("+1s",  fineX, fineY, BTN_W, () -> seek(1_000));
+        newButton("+1s",  fineX, fineY, BTN_W, () -> seek(1_000));
         fineX += BTN_W + 5;
-        seekFwd10sButton  = newButton("+10s", fineX, fineY, BTN_W, () -> seek(10_000));
+        newButton("+10s", fineX, fineY, BTN_W, () -> seek(10_000));
 
-        // --- main control row ---
+        // main control
         int ctrlY = fineY - BTN_H - 3;
         int ctrlX = (this.width - 5 * (BTN_W + 5)) / 2;
         chatSendToggleButton = newButton(chatSendLabel(), ctrlX, ctrlY, BTN_W, this::toggleChatSending);
         ctrlX += BTN_W + 5;
-        stopButton = newButton("停止",             ctrlX, ctrlY, BTN_W, this::stopPlayback);
+        stopButton = newButton("停止",                ctrlX, ctrlY, BTN_W, this::stopPlayback);
         ctrlX += BTN_W + 5;
-        playPauseButton = newButton(playLabel(),   ctrlX, ctrlY, BTN_W, this::togglePlayPause);
+        playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::togglePlayPause);
         ctrlX += BTN_W + 5;
-        newButton("-", ctrlX, ctrlY, BTN_W, () -> {}); // 占位
+        newButton("-", ctrlX, ctrlY, BTN_W, () -> {});
         ctrlX += BTN_W + 5;
-        newButton("-", ctrlX, ctrlY, BTN_W, () -> {}); // 占位
+        newButton("-", ctrlX, ctrlY, BTN_W, () -> {});
 
-        // --- lyric file list ---
         addLyricFileButtons();
     }
-
-    // ========================================================== render
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float pt) {
@@ -113,37 +101,23 @@ public class MainScreen extends Screen {
         g.fill(0, 0, this.width, this.height, 0x80000000);
         super.extractRenderState(g, mx, my, pt);
 
-        // 标题
         drawCentered(g, f, "LyricLive", this.width / 2, 6, C_YELLOW);
 
-        // ---- 右侧信息栏 ----
-        int infoX = this.width - 145;
-        int infoY = 24;
-        drawLeft(g, f, "状态: " + stateLabel(), infoX, infoY, C_WHITE);
-        drawLeft(g, f, "自动发送: " + (chatSender.isEnabled() ? "开" : "关"), infoX, infoY + 11, chatSender.isEnabled() ? C_GREEN : C_RED);
+        // 右侧信息栏
+        int ix = this.width - 145, iy = 24;
+        drawLeft(g, f, "状态: " + stateLabel(), ix, iy, C_WHITE);
+        drawLeft(g, f, "自动发送: " + (chatSender.isEnabled() ? "开" : "关"), ix, iy + 11, chatSender.isEnabled() ? C_GREEN : C_RED);
 
         if (timelineManager.hasLyrics()) {
             LyricTrack track = timelineManager.getCurrentTrack();
             String name = currentLyricFile != null ? currentLyricFile.getFileName().toString() : "";
-            if (!name.isEmpty()) drawLeft(g, f, trunc("文件: " + name, 18), infoX, infoY + 24, C_GRAY);
-            if (track.getTitle() != null)  drawLeft(g, f, trunc("歌曲: " + track.getTitle(), 18), infoX, infoY + 36, C_GRAY);
-            if (track.getArtist() != null) drawLeft(g, f, trunc("演唱: " + track.getArtist(), 18), infoX, infoY + 48, C_GRAY);
+            if (!name.isEmpty()) drawLeft(g, f, trunc("文件: " + name, 18), ix, iy + 24, C_GRAY);
+            if (track.getTitle() != null)  drawLeft(g, f, trunc("歌曲: " + track.getTitle(), 18), ix, iy + 36, C_GRAY);
+            if (track.getArtist() != null) drawLeft(g, f, trunc("演唱: " + track.getArtist(), 18), ix, iy + 48, C_GRAY);
 
             long cur = playbackController.getCurrentTimeMillis();
             long total = lastTimestamp();
-            drawLeft(g, f, "进度: " + fmtTime(cur) + " / " + fmtTime(total), infoX, infoY + 62, C_WHITE);
-        }
-
-        // ---- 歌词预览 ----
-        if (!timelineManager.hasLyrics()) {
-            drawCentered(g, f, "未加载歌词 — 请在下方点击文件名", this.width / 2, 110, C_GRAY);
-        } else {
-            List<LrcLyric> ctx = timelineManager.getCurrentLyricContext(2);
-            LrcLyric cur = timelineManager.getCurrentLyric();
-            for (int i = 0; i < ctx.size(); i++) {
-                boolean hl = ctx.get(i).equals(cur);
-                drawCentered(g, f, ctx.get(i).getText(), this.width / 2, LRC_START_Y + i * LINE_H, hl ? C_WHITE : 0xFF888888);
-            }
+            drawLeft(g, f, "进度: " + fmtTime(cur) + " / " + fmtTime(total), ix, iy + 62, C_WHITE);
         }
 
         // 状态提示
@@ -151,8 +125,6 @@ public class MainScreen extends Screen {
             drawLeft(g, f, statusMessage, 10, this.height - 14, C_GRAY);
         }
     }
-
-    // ====================================================== button helpers
 
     private Button newButton(String text, int x, int y, int w, Runnable action) {
         Button b = Button.builder(Component.literal(text), btn -> action.run()).bounds(x, y, w, BTN_H).build();
@@ -167,36 +139,23 @@ public class MainScreen extends Screen {
             case STOPPED -> "已停止";
         };
     }
-
-    private String playLabel() {
-        return playbackController.isPlaying() ? "暂停" : "播放";
-    }
-
-    private String chatSendLabel() {
-        return chatSender.isEnabled() ? "自动发: 开" : "自动发: 关";
-    }
-
-    // ====================================================== actions
+    private String playLabel() { return playbackController.isPlaying() ? "暂停" : "播放"; }
+    private String chatSendLabel() { return chatSender.isEnabled() ? "自动发: 开" : "自动发: 关"; }
 
     private void togglePlayPause() {
         if (playbackController.isPlaying()) playbackController.pause();
         else playbackController.play();
         playPauseButton.setMessage(Component.literal(playLabel()));
     }
-
     private void stopPlayback() {
         playbackController.stop();
         playPauseButton.setMessage(Component.literal(playLabel()));
     }
-
     private void toggleChatSending() {
         chatSender.setEnabled(!chatSender.isEnabled());
         chatSendToggleButton.setMessage(Component.literal(chatSendLabel()));
     }
-
-    private void seek(long deltaMs) {
-        playbackController.seek(deltaMs);
-    }
+    private void seek(long deltaMs) { playbackController.seek(deltaMs); }
 
     private void openSettings() {
         assert this.minecraft != null;
@@ -207,14 +166,11 @@ public class MainScreen extends Screen {
         try {
             scanLyricDirectory();
             rebuildFileButtons();
-            statusMessage = discoveredLrcFiles.isEmpty()
-                    ? "lyriclive/ 下未找到 .lrc 文件" : "已刷新歌词列表";
+            statusMessage = discoveredLrcFiles.isEmpty() ? "lyriclive/ 下未找到 .lrc 文件" : "已刷新歌词列表";
         } catch (IOException e) {
             statusMessage = "读取目录失败: " + e.getMessage();
         }
     }
-
-    // ==================================================== file list
 
     private void scanLyricDirectory() throws IOException {
         Path dir = Minecraft.getInstance().gameDirectory.toPath().resolve("lyriclive");
@@ -237,10 +193,7 @@ public class MainScreen extends Screen {
         }
     }
 
-    private void rebuildFileButtons() {
-        this.clearWidgets();
-        this.init();
-    }
+    private void rebuildFileButtons() { this.clearWidgets(); this.init(); }
 
     private void loadFile(Path path) {
         try {
@@ -252,36 +205,26 @@ public class MainScreen extends Screen {
         }
     }
 
-    // ========================================================= util
-
     private static String trunc(String s, int max) {
         return s.length() > max ? s.substring(0, max - 1) + "…" : s;
     }
-
     private static String fmtTime(long ms) {
         if (ms <= 0) return "00:00";
         long sec = ms / 1000;
         return String.format("%02d:%02d", sec / 60, sec % 60);
     }
-
     private long lastTimestamp() {
         if (!timelineManager.hasLyrics()) return 0;
         var list = timelineManager.getCurrentTrack().getLyrics();
         return list.isEmpty() ? 0 : list.get(list.size() - 1).getTimestamp();
     }
-
     private void drawLeft(GuiGraphicsExtractor g, Font f, String s, int x, int y, int c) {
         g.text(f, s, x, y, c, true);
     }
-
     private void drawCentered(GuiGraphicsExtractor g, Font f, String s, int x, int y, int c) {
         g.text(f, s, x - f.width(s) / 2, y, c, true);
     }
 
-    public void setCurrentLyricFile(Path file) {
-        this.currentLyricFile = file;
-    }
-
-    @Override
-    public boolean isPauseScreen() { return false; }
+    public void setCurrentLyricFile(Path file) { this.currentLyricFile = file; }
+    @Override public boolean isPauseScreen() { return false; }
 }
