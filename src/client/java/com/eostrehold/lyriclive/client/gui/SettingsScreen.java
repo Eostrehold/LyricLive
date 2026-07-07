@@ -6,7 +6,6 @@ import com.eostrehold.lyriclive.client.sender.CommandSender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -60,36 +59,32 @@ public class SettingsScreen extends Screen {
         // done
         addRenderableWidget(Button.builder(Component.literal("保存并返回"), b -> onClose())
                 .bounds(this.width / 2 - 50, this.height - 28, 100, 20).build());
-
-        // 通过 widget 机制绘制标签（确保可见）
-        addRenderableWidget(new LabelWidget());
     }
 
-    // ---- widget 绘制所有标签 ----
-    private class LabelWidget extends AbstractWidget {
-        LabelWidget() { super(0, 0, 1, 1, Component.empty()); }
-        @Override
-        protected void renderWidget(GuiGraphicsExtractor g, int mx, int my, float pt) {
-            Font f = Minecraft.getInstance().font;
-            for (int i = 0; i < 6; i++) {
-                int y = ROW_Y0 + i * ROW_H + 5;
-                g.text(f, LABELS[i], COL_LABEL, y, C_WHITE, true);
-                int nx = COL_NOTE;
-                int nw = f.width(NOTES[i]);
-                g.fill(nx - 2, y - 1, nx + nw + 4, y + f.lineHeight + 2, 0xAA333333);
-                g.text(f, NOTES[i], nx, y, C_GRAY, false);
-            }
-        }
-    }
-
-    // ---- render: 只处理背景 + 标题 ----
+    // ---- render: 背景 + 控件 + 标签 ----
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float pt) {
+        Font f = Minecraft.getInstance().font;
+
+        // 背景
         g.fill(0, 0, this.width, this.height, 0xC0101010);
-        String t = "LyricLive Settings";
-        Minecraft c = Minecraft.getInstance();
-        g.text(c.font, t, this.width / 2 - c.font.width(t) / 2, 8, C_YELLOW, true);
+
+        // 标题
+        String title = "LyricLive Settings";
+        g.text(f, title, this.width / 2 - f.width(title) / 2, 8, C_YELLOW, true);
+
+        // 控件
         super.extractRenderState(g, mx, my, pt);
+
+        // 标签
+        for (int i = 0; i < 6; i++) {
+            int y = ROW_Y0 + i * ROW_H + 5;
+            g.text(f, LABELS[i], COL_LABEL, y, C_WHITE, true);
+            int nx = COL_NOTE;
+            int nw = f.width(NOTES[i]);
+            g.fill(nx - 2, y - 1, nx + nw + 4, y + f.lineHeight + 2, 0xAA333333);
+            g.text(f, NOTES[i], nx, y, C_GRAY, false);
+        }
     }
 
     // ---- helpers ----
