@@ -43,3 +43,5 @@ replay_*.log
 .trellis
 AGENTS.md
 fabric-docs-main
+.codex
+.agents
