@@ -1,4 +1,4 @@
-﻿package com.eostrehold.lyriclive.client.display;
+package com.eostrehold.lyriclive.client.display;
 
 import com.eostrehold.lyriclive.client.core.PlaybackController;
 import com.eostrehold.lyriclive.client.core.TimelineManager;
@@ -67,12 +67,14 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
         LyricTrack track = timelineManager.getCurrentTrack();
         int mi = manualIndexSupplier.getAsInt();
 
-        // ---- 信息栏 (右下角，歌词下方) ----
-        drawHudInfo(g, c, baseX, baseY + 5 * 11 + 4, alpha, track);
+        int lh = 11;
 
         // ---- 歌词上下文 (auto ±2 lines) ----
         List<LrcLyric> ctx = timelineManager.getCurrentLyricContext(2);
         if (ctx.isEmpty()) return;
+
+        int infoY = baseY + ctx.size() * lh + 4;
+        drawHudInfo(g, c, baseX, infoY, alpha, track);
 
         LrcLyric cur = timelineManager.getCurrentLyric();
         int realCenter = ctx.indexOf(cur);
@@ -87,9 +89,6 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
         if (Math.abs(smoothCenterIndex - realCenter) < 0.01f) {
             smoothCenterIndex = realCenter;
         }
-
-        int lh = 11;
-        float centerOffset = (smoothCenterIndex - realCenter) * lh;
 
         for (int i = 0; i < ctx.size(); i++) {
             LrcLyric l = ctx.get(i);

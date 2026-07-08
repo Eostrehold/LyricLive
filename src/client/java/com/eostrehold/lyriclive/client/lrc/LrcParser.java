@@ -53,6 +53,7 @@ public class LrcParser {
             }
         }
 
+        track.sort();
         LyricLive.LOGGER.info("LRC 解析完成: {}", track);
         return track;
     }

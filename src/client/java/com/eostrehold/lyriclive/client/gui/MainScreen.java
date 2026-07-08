@@ -1,4 +1,4 @@
-﻿package com.eostrehold.lyriclive.client.gui;
+package com.eostrehold.lyriclive.client.gui;
 
 import com.eostrehold.lyriclive.client.core.PlaybackController;
 import com.eostrehold.lyriclive.client.core.TimelineManager;

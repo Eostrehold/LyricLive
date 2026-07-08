@@ -1,4 +1,4 @@
-﻿package com.eostrehold.lyriclive.client.display;
+package com.eostrehold.lyriclive.client.display;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.eostrehold.lyriclive.LyricLive;
@@ -9,6 +9,8 @@ import java.nio.file.Path;
  * 歌词显示配置，管理显示样式和位置。
  */
 public class DisplayConfig {
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON_READ = new Gson();
     // 位置配置
     private float positionX = 0.5f;  // X 位置（0.0 - 1.0，相对于屏幕宽度）
     private float positionY = 0.8f;  // Y 位置（0.0 - 1.0，相对于屏幕高度）
@@ -163,9 +165,8 @@ public class DisplayConfig {
      */
     public void save(Path path) {
         try {
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
             Files.createDirectories(path.getParent());
-            String json = gson.toJson(this);
+            String json = GSON.toJson(this);
             Files.writeString(path, json);
             LyricLive.LOGGER.info("显示配置已保存: {}", path);
         } catch (IOException e) {
@@ -181,9 +182,8 @@ public class DisplayConfig {
     public static DisplayConfig load(Path path) {
         try {
             if (Files.exists(path)) {
-                Gson gson = new Gson();
                 String json = Files.readString(path);
-                DisplayConfig config = gson.fromJson(json, DisplayConfig.class);
+                DisplayConfig config = GSON_READ.fromJson(json, DisplayConfig.class);
                 if (config != null) {
                     LyricLive.LOGGER.info("显示配置已加载: {}", path);
                     return config;

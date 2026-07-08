@@ -1,4 +1,4 @@
-﻿package com.eostrehold.lyriclive.client.gui;
+package com.eostrehold.lyriclive.client.gui;
 
 import com.eostrehold.lyriclive.LyricLive;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;

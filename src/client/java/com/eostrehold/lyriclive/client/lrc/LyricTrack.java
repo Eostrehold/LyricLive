@@ -1,4 +1,4 @@
-﻿package com.eostrehold.lyriclive.client.lrc;
+package com.eostrehold.lyriclive.client.lrc;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,14 +65,17 @@ public class LyricTrack {
     }
 
     /**
-     * 添加歌词行（自动保持时间顺序）
+     * 添加歌词行（追加到末尾）
      */
     public void addLyric(LrcLyric lyric) {
-        // 二分查找按时间序插入，避免每次添加后全排序
-        int pos = java.util.Collections.binarySearch(lyrics, lyric,
-                (a, b) -> Long.compare(a.getTimestamp(), b.getTimestamp()));
-        if (pos < 0) pos = -pos - 1;
-        lyrics.add(pos, lyric);
+        lyrics.add(lyric);
+    }
+
+    /**
+     * 按时间戳排序（解析完成后调用一次）
+     */
+    public void sort() {
+        lyrics.sort((a, b) -> Long.compare(a.getTimestamp(), b.getTimestamp()));
     }
 
     /**

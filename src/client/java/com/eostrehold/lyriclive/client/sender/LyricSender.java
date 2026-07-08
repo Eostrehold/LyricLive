@@ -1,11 +1,11 @@
-﻿package com.eostrehold.lyriclive.client.sender;
+package com.eostrehold.lyriclive.client.sender;
 
 import com.eostrehold.lyriclive.LyricLive;
 import net.minecraft.client.Minecraft;
 
 /**
  * 歌词发送器，支持普通发送和前缀发送两种模式。
- * 替代 ChatSender（无前缀）和 CommandSender（带前缀）的统一实现。
+ * 通过 prefix 字段区分：空字符串 = 普通聊天发送，非空 = 带前缀发送。
  */
 public class LyricSender {
     private boolean enabled = true;

@@ -45,10 +45,9 @@ public class TimelineManager {
         }
 
         long currentTime = playbackController.getCurrentTimeMillis();
-        LrcLyric lyric = currentTrack.getCurrentLyric(currentTime);
-
-        if (lyric != null) {
-            int newIndex = currentTrack.getCurrentLyricIndex(currentTime);
+        int newIndex = currentTrack.getCurrentLyricIndex(currentTime);
+        if (newIndex >= 0) {
+            LrcLyric lyric = currentTrack.getLyrics().get(newIndex);
             if (newIndex != currentLyricIndex) {
                 currentLyricIndex = newIndex;
                 LyricLive.LOGGER.debug("歌词切换: {}", lyric.getText());
@@ -69,7 +68,12 @@ public class TimelineManager {
         }
 
         long currentTime = playbackController.getCurrentTimeMillis();
-        return currentTrack.getCurrentLyric(currentTime);
+        int newIndex = currentTrack.getCurrentLyricIndex(currentTime);
+        if (newIndex >= 0) {
+            currentLyricIndex = newIndex;
+            return currentTrack.getLyrics().get(newIndex);
+        }
+        return null;
     }
 
     /**

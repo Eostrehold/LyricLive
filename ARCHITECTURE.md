@@ -19,8 +19,7 @@ LyricLive 是一个基于 Fabric 26.1.2 的纯客户端模组，用于在 Minecr
 - **DisplayConfig** - 管理显示配置（颜色、大小、位置等）
 
 ### 4. 发送模块 (Sender)
-- **ChatSender** - 将歌词发送到聊天栏
-- **CommandSender** - 将歌词作为指令发送
+- **LyricSender** - 统一歌词发送器，通过 prefix 字段区分模式：空 prefix 发到聊天栏，非空 prefix 附加前缀发送
 
 ### 5. GUI 模块 (GUI)
 - **MainScreen** - 主界面，包含播放控制、文件选择等
@@ -32,7 +31,7 @@ LyricLive 是一个基于 Fabric 26.1.2 的纯客户端模组，用于在 Minecr
 LRC 文件 → LrcParser → LyricTrack → TimelineManager → PlaybackController
                                                             ↓
                                                     LyricRenderer (显示)
-                                                    ChatSender (发送)
+                                                    LyricSender (发送)
 ```
 
 ## 关键技术点
@@ -60,8 +59,7 @@ src/
 │   │   │   ├── LyricRenderer.java
 │   │   │   └── DisplayConfig.java
 │   │   ├── sender/
-│   │   │   ├── ChatSender.java
-│   │   │   └── CommandSender.java
+│   │   │   └── LyricSender.java
 │   │   └── gui/
 │   │       ├── MainScreen.java
 │   │       └── SettingsScreen.java
