@@ -139,7 +139,7 @@ public class LyricLiveClient implements ClientModInitializer {
     private void handleAutoLyricSending() {
         if (!playbackController.isPlaying()) return;
 
-        if (chatSender.isEnabled()) {
+        if (chatSender.isEnabled() && !commandSender.isEnabled()) {
             String cur = timelineManager.getCurrentLyricText();
             if (cur != null && !cur.isEmpty()) chatSender.sendCurrentLyric(cur);
         }
