@@ -1,4 +1,4 @@
-package com.eostrehold.lyriclive.client;
+﻿package com.eostrehold.lyriclive.client;
 
 import com.eostrehold.lyriclive.LyricLive;
 import com.eostrehold.lyriclive.client.core.PlaybackController;
@@ -6,8 +6,8 @@ import com.eostrehold.lyriclive.client.core.TimelineManager;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.display.LyricRenderer;
 import com.eostrehold.lyriclive.client.gui.MainScreen;
-import com.eostrehold.lyriclive.client.sender.ChatSender;
-import com.eostrehold.lyriclive.client.sender.CommandSender;
+import com.eostrehold.lyriclive.client.sender.LyricSender;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -27,8 +27,8 @@ public class LyricLiveClient implements ClientModInitializer {
     private static TimelineManager timelineManager;
     private static DisplayConfig displayConfig;
     private static LyricRenderer lyricRenderer;
-    private static ChatSender chatSender;
-    private static CommandSender commandSender;
+    private static LyricSender chatSender;
+    private static LyricSender commandSender;
 
     private static MainScreen mainScreen;
 
@@ -48,12 +48,13 @@ public class LyricLiveClient implements ClientModInitializer {
     public void onInitializeClient() {
         playbackController = new PlaybackController();
         timelineManager = new TimelineManager(playbackController);
-        displayConfig = new DisplayConfig();
-        chatSender = new ChatSender();
-        commandSender = new CommandSender();
+        displayConfig = DisplayConfig.load(getDisplayConfigPath());
+        chatSender = new LyricSender();
+        commandSender = new LyricSender();
+        commandSender.setEnabled(false);
         lyricRenderer = new LyricRenderer(timelineManager, playbackController, chatSender, displayConfig, () -> manualLyricIndex);
 
-        mainScreen = new MainScreen(playbackController, timelineManager, lyricRenderer, chatSender, commandSender, displayConfig);
+        mainScreen = new MainScreen(playbackController, timelineManager, chatSender, commandSender, displayConfig);
 
         CATEGORY = KeyMapping.Category.register(
                 Identifier.fromNamespaceAndPath(LyricLive.MOD_ID, "keys"));
@@ -153,8 +154,8 @@ public class LyricLiveClient implements ClientModInitializer {
     public static TimelineManager getTimelineManager() { return timelineManager; }
     public static DisplayConfig getDisplayConfig() { return displayConfig; }
     public static LyricRenderer getLyricRenderer() { return lyricRenderer; }
-    public static ChatSender getChatSender() { return chatSender; }
-    public static CommandSender getCommandSender() { return commandSender; }
+    public static LyricSender getChatSender() { return chatSender; }
+    public static LyricSender getCommandSender() { return commandSender; }
     public static MainScreen getMainScreen() { return mainScreen; }
 
     public static void loadLyricFile(String filePath) {
@@ -167,6 +168,15 @@ public class LyricLiveClient implements ClientModInitializer {
         } catch (IOException e) {
             LyricLive.LOGGER.error("加载歌词文件失败: {}", filePath, e);
         }
+    }
+
+    private static Path getDisplayConfigPath() {
+        return Minecraft.getInstance().gameDirectory.toPath()
+                .resolve("config/lyriclive/display.json");
+    }
+
+    public static void saveDisplayConfig() {
+        displayConfig.save(getDisplayConfigPath());
     }
 
     public static Path getCurrentLyricFile() { return currentLyricFile; }

@@ -1,12 +1,11 @@
-package com.eostrehold.lyriclive.client.gui;
+﻿package com.eostrehold.lyriclive.client.gui;
 
 import com.eostrehold.lyriclive.client.core.PlaybackController;
 import com.eostrehold.lyriclive.client.core.TimelineManager;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
-import com.eostrehold.lyriclive.client.display.LyricRenderer;
 import com.eostrehold.lyriclive.client.lrc.LyricTrack;
-import com.eostrehold.lyriclive.client.sender.ChatSender;
-import com.eostrehold.lyriclive.client.sender.CommandSender;
+import com.eostrehold.lyriclive.client.sender.LyricSender;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -34,8 +33,8 @@ public class MainScreen extends Screen {
     private final PlaybackController playbackController;
     private final TimelineManager timelineManager;
     private final DisplayConfig displayConfig;
-    private final ChatSender chatSender;
-    private final CommandSender commandSender;
+    private final LyricSender chatSender;
+    private final LyricSender commandSender;
 
     private Button playPauseButton;
     private Button stopButton;
@@ -48,7 +47,7 @@ public class MainScreen extends Screen {
     private String statusMessage = "请将 .lrc 放入 lyriclive/ 后点[刷新列表]";
 
     public MainScreen(PlaybackController playbackController, TimelineManager timelineManager,
-                      LyricRenderer lyricRenderer, ChatSender chatSender, CommandSender commandSender,
+                      LyricSender chatSender, LyricSender commandSender,
                       DisplayConfig displayConfig) {
         super(Component.literal("LyricLive"));
         this.playbackController = playbackController;
@@ -84,14 +83,9 @@ public class MainScreen extends Screen {
         int ctrlX = (this.width - 5 * (BTN_W + 5)) / 2;
         chatSendToggleButton = newButton(chatSendLabel(), ctrlX, ctrlY, BTN_W, this::toggleChatSending);
         ctrlX += BTN_W + 5;
-        stopButton = newButton("停止",                ctrlX, ctrlY, BTN_W, this::stopPlayback);
+stopButton = newButton("停止",                ctrlX, ctrlY, BTN_W, this::stopPlayback);
         ctrlX += BTN_W + 5;
-        playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::togglePlayPause);
-        ctrlX += BTN_W + 5;
-        newButton("-", ctrlX, ctrlY, BTN_W, () -> {});
-        ctrlX += BTN_W + 5;
-        newButton("-", ctrlX, ctrlY, BTN_W, () -> {});
-
+playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::togglePlayPause);
         addLyricFileButtons();
     }
 

@@ -1,10 +1,10 @@
-package com.eostrehold.lyriclive.client.display;
+﻿package com.eostrehold.lyriclive.client.display;
 
 import com.eostrehold.lyriclive.client.core.PlaybackController;
 import com.eostrehold.lyriclive.client.core.TimelineManager;
 import com.eostrehold.lyriclive.client.lrc.LrcLyric;
 import com.eostrehold.lyriclive.client.lrc.LyricTrack;
-import com.eostrehold.lyriclive.client.sender.ChatSender;
+import com.eostrehold.lyriclive.client.sender.LyricSender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
@@ -14,7 +14,7 @@ import java.util.function.IntSupplier;
 public class LyricRenderer {
     private final TimelineManager timelineManager;
     private final PlaybackController playbackController;
-    private final ChatSender chatSender;
+    private final LyricSender chatSender;
     private final DisplayConfig config;
     private final IntSupplier manualIndexSupplier;
 
@@ -24,18 +24,15 @@ public class LyricRenderer {
     private float fadeInAlpha = 0f;
 
     // 信息栏淡入
-    private long infoFadeStartNanos;
-
-    public LyricRenderer(TimelineManager timelineManager, PlaybackController playbackController,
-                         ChatSender chatSender, DisplayConfig config, IntSupplier manualIndexSupplier) {
+public LyricRenderer(TimelineManager timelineManager, PlaybackController playbackController,
+                         LyricSender chatSender, DisplayConfig config, IntSupplier manualIndexSupplier) {
         this.timelineManager = timelineManager;
         this.playbackController = playbackController;
         this.chatSender = chatSender;
         this.config = config;
         this.manualIndexSupplier = manualIndexSupplier;
         this.lastRenderNanos = System.nanoTime();
-        this.infoFadeStartNanos = System.nanoTime();
-    }
+}
 
     public void render(GuiGraphicsExtractor g) {
         if (!timelineManager.hasLyrics()) {

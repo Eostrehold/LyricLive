@@ -1,8 +1,9 @@
-package com.eostrehold.lyriclive.client.gui;
+﻿package com.eostrehold.lyriclive.client.gui;
 
+import com.eostrehold.lyriclive.LyricLive;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
-import com.eostrehold.lyriclive.client.sender.ChatSender;
-import com.eostrehold.lyriclive.client.sender.CommandSender;
+import com.eostrehold.lyriclive.client.sender.LyricSender;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -23,16 +24,15 @@ public class SettingsScreen extends Screen {
     private static final int C_G    = 0xFFCCCCCC;
 
     private final DisplayConfig dc;
-    private final ChatSender cs;
-    private final CommandSender cmds;
+    private final LyricSender cs;
+    private final LyricSender cmds;
     private final Screen parent;
 
     private EditBox posX, posY, size, color, opacity;
     private EditBox prefixBox;
     private Button shdTog, cenTog, fadeTog, cmdTog;
 
-    public SettingsScreen(DisplayConfig dc, ChatSender cs,
-                          CommandSender cmds, Screen parent) {
+    public SettingsScreen(DisplayConfig dc, LyricSender cs, LyricSender cmds, Screen parent) {
         super(Component.literal("LyricLive 设置"));
         this.dc = dc; this.cs = cs; this.cmds = cmds; this.parent = parent;
     }
@@ -127,7 +127,10 @@ public class SettingsScreen extends Screen {
             dc.setFontColor(Integer.parseInt(color.getValue().replace("#", ""), 16));
             dc.setOpacity(Float.parseFloat(opacity.getValue()));
             cmds.setPrefix(prefixBox.getValue());
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+            LyricLive.LOGGER.warn("设置输入值不合法，已忽略");
+        }
+        dc.save(Minecraft.getInstance().gameDirectory.toPath().resolve("config/lyriclive/display.json"));
     }
 
     private static final String[] LBL = {

@@ -1,0 +1,8 @@
+﻿{
+  "key.lyriclive.open_gui": "Open LyricLive GUI",
+  "key.lyriclive.toggle_play_pause": "Play / Pause",
+  "key.lyriclive.stop": "Stop",
+  "key.lyriclive.send_lyric": "Send Lyric",
+  "key.lyriclive.toggle_auto_send": "Toggle Auto Send",
+  "category.lyriclive.keys": "LyricLive Keys"
+}

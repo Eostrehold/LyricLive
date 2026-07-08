@@ -1,5 +1,10 @@
-package com.eostrehold.lyriclive.client.display;
-
+﻿package com.eostrehold.lyriclive.client.display;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.eostrehold.lyriclive.LyricLive;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 /**
  * 歌词显示配置，管理显示样式和位置。
  */
@@ -151,5 +156,42 @@ public class DisplayConfig {
     public String toString() {
         return String.format("DisplayConfig[pos=(%.2f, %.2f), fontSize=%d, color=#%06X, opacity=%.2f, centered=%b]",
                 positionX, positionY, fontSize, fontColor, opacity, centered);
+    }
+    /**
+     * 保存配置到 JSON 文件
+     * @param path 配置文件路径
+     */
+    public void save(Path path) {
+        try {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            Files.createDirectories(path.getParent());
+            String json = gson.toJson(this);
+            Files.writeString(path, json);
+            LyricLive.LOGGER.info("显示配置已保存: {}", path);
+        } catch (IOException e) {
+            LyricLive.LOGGER.error("保存显示配置失败", e);
+        }
+    }
+
+    /**
+     * 从 JSON 文件加载配置
+     * @param path 配置文件路径
+     * @return 加载后的配置对象，失败则返回默认配置
+     */
+    public static DisplayConfig load(Path path) {
+        try {
+            if (Files.exists(path)) {
+                Gson gson = new Gson();
+                String json = Files.readString(path);
+                DisplayConfig config = gson.fromJson(json, DisplayConfig.class);
+                if (config != null) {
+                    LyricLive.LOGGER.info("显示配置已加载: {}", path);
+                    return config;
+                }
+            }
+        } catch (IOException e) {
+            LyricLive.LOGGER.warn("加载显示配置失败，使用默认值", e);
+        }
+        return new DisplayConfig();
     }
 }
