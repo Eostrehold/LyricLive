@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
 
 public class LyricRenderer {
@@ -17,6 +18,7 @@ public class LyricRenderer {
     private final LyricSender chatSender;
     private final DisplayConfig config;
     private final IntSupplier manualIndexSupplier;
+    private final BooleanSupplier autoSendSupplier;
 
     // 动画状态
     private float smoothCenterIndex = -1f;
@@ -25,12 +27,14 @@ public class LyricRenderer {
 
     // 信息栏淡入
 public LyricRenderer(TimelineManager timelineManager, PlaybackController playbackController,
-                         LyricSender chatSender, DisplayConfig config, IntSupplier manualIndexSupplier) {
+                         LyricSender chatSender, DisplayConfig config, IntSupplier manualIndexSupplier,
+                         BooleanSupplier autoSendSupplier) {
         this.timelineManager = timelineManager;
         this.playbackController = playbackController;
         this.chatSender = chatSender;
         this.config = config;
         this.manualIndexSupplier = manualIndexSupplier;
+        this.autoSendSupplier = autoSendSupplier;
         this.lastRenderNanos = System.nanoTime();
 }
 
@@ -160,7 +164,7 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
         g.text(c.font, state, x, y + row * lh, stateColor, true);
         row++;
 
-        boolean auto = chatSender.isEnabled();
+        boolean auto = autoSendSupplier.getAsBoolean();
         g.text(c.font, auto ? "AUTO ON" : "AUTO OFF", x, y + row * lh, auto ? green : red, true);
     }
 

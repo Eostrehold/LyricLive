@@ -5,6 +5,7 @@ import com.eostrehold.lyriclive.client.core.TimelineManager;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.lrc.LyricTrack;
 import com.eostrehold.lyriclive.client.sender.LyricSender;
+import com.eostrehold.lyriclive.client.LyricLiveClient;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -100,7 +101,7 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
         // 右侧信息栏
         int ix = this.width - 145, iy = 24;
         drawLeft(g, f, "状态: " + stateLabel(), ix, iy, C_WHITE);
-        drawLeft(g, f, "自动发送: " + (chatSender.isEnabled() ? "开" : "关"), ix, iy + 11, chatSender.isEnabled() ? C_GREEN : C_RED);
+        drawLeft(g, f, "自动发送: " + (LyricLiveClient.isAutoSendEnabled() ? "开" : "关"), ix, iy + 11, LyricLiveClient.isAutoSendEnabled() ? C_GREEN : C_RED);
 
         if (timelineManager.hasLyrics()) {
             LyricTrack track = timelineManager.getCurrentTrack();
@@ -134,7 +135,7 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
         };
     }
     private String playLabel() { return playbackController.isPlaying() ? "暂停" : "播放"; }
-    private String chatSendLabel() { return chatSender.isEnabled() ? "自动发: 开" : "自动发: 关"; }
+    private String chatSendLabel() { return LyricLiveClient.isAutoSendEnabled() ? "自动发: 开" : "自动发: 关"; }
 
     private void togglePlayPause() {
         if (playbackController.isPlaying()) playbackController.pause();
@@ -146,7 +147,7 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
         playPauseButton.setMessage(Component.literal(playLabel()));
     }
     private void toggleChatSending() {
-        chatSender.setEnabled(!chatSender.isEnabled());
+        LyricLiveClient.setAutoSendEnabled(!LyricLiveClient.isAutoSendEnabled());
         chatSendToggleButton.setMessage(Component.literal(chatSendLabel()));
     }
     private void seek(long deltaMs) { playbackController.seek(deltaMs); }

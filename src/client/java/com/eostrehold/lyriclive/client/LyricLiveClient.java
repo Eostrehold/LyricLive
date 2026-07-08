@@ -43,6 +43,7 @@ public class LyricLiveClient implements ClientModInitializer {
     private static KeyMapping.Category CATEGORY;
 
     private static int manualLyricIndex = -1;
+    private static boolean autoSendEnabled = true;
 
     @Override
     public void onInitializeClient() {
@@ -52,7 +53,7 @@ public class LyricLiveClient implements ClientModInitializer {
         chatSender = new LyricSender();
         commandSender = new LyricSender();
         commandSender.setEnabled(false);
-        lyricRenderer = new LyricRenderer(timelineManager, playbackController, chatSender, displayConfig, () -> manualLyricIndex);
+        lyricRenderer = new LyricRenderer(timelineManager, playbackController, chatSender, displayConfig, () -> manualLyricIndex, () -> autoSendEnabled);
 
         mainScreen = new MainScreen(playbackController, timelineManager, chatSender, commandSender, displayConfig);
 
@@ -110,12 +111,12 @@ public class LyricLiveClient implements ClientModInitializer {
             manualSendCurrentLyric();
         }
         while (toggleAutoSendKey.consumeClick()) {
-            chatSender.setEnabled(!chatSender.isEnabled());
+            autoSendEnabled = !autoSendEnabled;
         }
     }
 
     private void manualSendCurrentLyric() {
-        if (chatSender.isEnabled()) return; // 自动发送开启时禁用手动发送
+        if (autoSendEnabled) return; // 自动发送开启时禁用手动发送
         if (!timelineManager.hasLyrics()) return;
         var lyrics = timelineManager.getCurrentTrack().getLyrics();
         if (lyrics.isEmpty()) return;
@@ -127,7 +128,11 @@ public class LyricLiveClient implements ClientModInitializer {
 
         String text = lyrics.get(manualLyricIndex).getText();
         if (text != null && !text.isEmpty()) {
-            chatSender.forceSendLyric(text);
+            if (commandSender.isEnabled()) {
+                commandSender.forceSendLyric(text);
+            } else {
+                chatSender.forceSendLyric(text);
+            }
         }
 
         manualLyricIndex++;
@@ -138,14 +143,15 @@ public class LyricLiveClient implements ClientModInitializer {
 
     private void handleAutoLyricSending() {
         if (!playbackController.isPlaying()) return;
+        if (!autoSendEnabled) return;
 
-        if (chatSender.isEnabled() && !commandSender.isEnabled()) {
-            String cur = timelineManager.getCurrentLyricText();
-            if (cur != null && !cur.isEmpty()) chatSender.sendCurrentLyric(cur);
-        }
+        String cur = timelineManager.getCurrentLyricText();
+        if (cur == null || cur.isEmpty()) return;
+
         if (commandSender.isEnabled()) {
-            String cur = timelineManager.getCurrentLyricText();
-            if (cur != null && !cur.isEmpty()) commandSender.sendCurrentLyric(cur);
+            commandSender.sendCurrentLyric(cur);
+        } else {
+            chatSender.sendCurrentLyric(cur);
         }
     }
 
@@ -180,4 +186,6 @@ public class LyricLiveClient implements ClientModInitializer {
     }
 
     public static Path getCurrentLyricFile() { return currentLyricFile; }
+    public static boolean isAutoSendEnabled() { return autoSendEnabled; }
+    public static void setAutoSendEnabled(boolean enabled) { autoSendEnabled = enabled; }
 }
