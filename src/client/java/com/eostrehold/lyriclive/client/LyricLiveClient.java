@@ -149,9 +149,9 @@ public class LyricLiveClient implements ClientModInitializer {
         if (cur == null || cur.isEmpty()) return;
 
         if (commandSender.isEnabled()) {
-            commandSender.sendCurrentLyric(cur);
+            commandSender.sendLyric(cur);
         } else {
-            chatSender.sendCurrentLyric(cur);
+            chatSender.sendLyric(cur);
         }
     }
 

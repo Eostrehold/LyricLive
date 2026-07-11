@@ -79,23 +79,26 @@ public class LyricTrack {
     }
 
     /**
-     * 获取指定时间对应的歌词索引
+     * 获取指定时间对应的歌词索引（二分查找，O(log n)）
      * @param timeMs 当前时间（毫秒）
      * @return 歌词索引，如果没有找到则返回 -1
      */
     public int getCurrentLyricIndex(long timeMs) {
-        if (lyrics.isEmpty()) {
+        if (lyrics.isEmpty() || timeMs < lyrics.get(0).getTimestamp()) {
             return -1;
         }
 
-        // 从后向前查找第一个时间戳小于等于当前时间的歌词
-        for (int i = lyrics.size() - 1; i >= 0; i--) {
-            if (lyrics.get(i).getTimestamp() <= timeMs) {
-                return i;
+        int lo = 0, hi = lyrics.size() - 1, result = -1;
+        while (lo <= hi) {
+            int mid = lo + ((hi - lo) >> 1);
+            if (lyrics.get(mid).getTimestamp() <= timeMs) {
+                result = mid;
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
             }
         }
-
-        return -1;
+        return result;
     }
 
     /**

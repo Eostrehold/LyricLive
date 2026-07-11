@@ -35,12 +35,6 @@ public class LyricSender {
         return false;
     }
 
-    /**
-     * 发送当前歌词（如果歌词已变化）
-     */
-    public boolean sendCurrentLyric(String lyricText) {
-        return sendLyric(lyricText);
-    }
 
     /**
      * 强制发送歌词（忽略重复检查和 enabled 状态）

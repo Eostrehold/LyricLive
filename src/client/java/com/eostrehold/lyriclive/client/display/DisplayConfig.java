@@ -10,7 +10,6 @@ import java.nio.file.Path;
  */
 public class DisplayConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Gson GSON_READ = new Gson();
     // 位置配置
     private float positionX = 0.5f;  // X 位置（0.0 - 1.0，相对于屏幕宽度）
     private float positionY = 0.8f;  // Y 位置（0.0 - 1.0，相对于屏幕高度）
@@ -183,7 +182,7 @@ public class DisplayConfig {
         try {
             if (Files.exists(path)) {
                 String json = Files.readString(path);
-                DisplayConfig config = GSON_READ.fromJson(json, DisplayConfig.class);
+                DisplayConfig config = GSON.fromJson(json, DisplayConfig.class);
                 if (config != null) {
                     LyricLive.LOGGER.info("显示配置已加载: {}", path);
                     return config;
