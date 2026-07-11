@@ -47,6 +47,14 @@ public class MainScreen extends Screen {
     private Path currentLyricFile;
     private String statusMessage = "请将 .lrc 放入 lyriclive/ 后点[刷新列表]";
 
+    // 进度条配置
+    private static final int PROGRESS_BAR_H = 8;
+    private static final int PROGRESS_BAR_W = 260;
+    private static final int PROGRESS_BAR_MARGIN_BOTTOM = 10;
+    private static final int C_PROGRESS_BG = 0xFF333333;
+    private static final int C_PROGRESS_FG = 0xFF55FF55;
+    private static final int C_PROGRESS_HOVER = 0xFF77FF77;
+
     public MainScreen(PlaybackController playbackController, TimelineManager timelineManager,
                       LyricSender chatSender, LyricSender commandSender,
                       DisplayConfig displayConfig) {
@@ -113,6 +121,11 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
             long cur = playbackController.getCurrentTimeMillis();
             long total = lastTimestamp();
             drawLeft(g, f, "进度: " + fmtTime(cur) + " / " + fmtTime(total), ix, iy + 62, C_WHITE);
+        }
+
+        // 歌词进度条
+        if (timelineManager.hasLyrics()) {
+            drawProgressBar(g, mx, my);
         }
 
         // 状态提示
@@ -222,4 +235,54 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
 
     public void setCurrentLyricFile(Path file) { this.currentLyricFile = file; }
     @Override public boolean isPauseScreen() { return false; }
+
+    private void drawProgressBar(GuiGraphicsExtractor g, int mx, int my) {
+        Font f = Minecraft.getInstance().font;
+        long cur = playbackController.getCurrentTimeMillis();
+        long total = lastTimestamp();
+        if (total <= 0) return;
+
+        int barX = (this.width - PROGRESS_BAR_W) / 2;
+        int barY = this.height - PROGRESS_BAR_MARGIN_BOTTOM - PROGRESS_BAR_H;
+
+        boolean hover = mx >= barX && mx <= barX + PROGRESS_BAR_W
+                     && my >= barY && my <= barY + PROGRESS_BAR_H;
+        int fgColor = hover ? C_PROGRESS_HOVER : C_PROGRESS_FG;
+
+        // 背景
+        g.fill(barX, barY, barX + PROGRESS_BAR_W, barY + PROGRESS_BAR_H, C_PROGRESS_BG);
+        // 进度
+        int fillW = (int) (PROGRESS_BAR_W * Math.min(1.0, (double) cur / total));
+        g.fill(barX, barY, barX + fillW, barY + PROGRESS_BAR_H, fgColor);
+
+        // 时间文本
+        String timeText = fmtTime(cur) + " / " + fmtTime(total);
+        g.text(f, timeText, barX + PROGRESS_BAR_W / 2 - f.width(timeText) / 2, barY - 12, C_WHITE, true);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button != 0 || !timelineManager.hasLyrics()) {
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
+
+        int barX = (this.width - PROGRESS_BAR_W) / 2;
+        int barY = this.height - PROGRESS_BAR_MARGIN_BOTTOM - PROGRESS_BAR_H;
+
+        if (mouseX >= barX && mouseX <= barX + PROGRESS_BAR_W
+                && mouseY >= barY && mouseY <= barY + PROGRESS_BAR_H) {
+            long total = lastTimestamp();
+            if (total > 0) {
+                double ratio = (mouseX - barX) / (double) PROGRESS_BAR_W;
+                long targetMs = (long) (total * Math.max(0.0, Math.min(1.0, ratio)));
+                playbackController.seekTo(targetMs);
+                if (!playbackController.isPlaying()) {
+                    playbackController.play();
+                }
+            }
+            return true;
+        }
+
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
 }
