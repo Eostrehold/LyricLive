@@ -12,6 +12,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 import java.io.IOException;
@@ -261,9 +262,13 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean isDoubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.buttonInfo().button();
+
         if (button != 0 || !timelineManager.hasLyrics()) {
-            return super.mouseClicked(mouseX, mouseY, button);
+            return super.mouseClicked(event, isDoubleClick);
         }
 
         int barX = (this.width - PROGRESS_BAR_W) / 2;
@@ -283,6 +288,6 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
             return true;
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, isDoubleClick);
     }
 }
