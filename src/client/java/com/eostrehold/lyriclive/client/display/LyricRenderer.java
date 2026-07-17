@@ -105,7 +105,7 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
         int lh = Math.max(1, Math.round(11 / fontScale));
 
         var pose = g.pose();
-        pose.pushPose();
+        pose.pushMatrix();
         if (Math.abs(fontScale - 1.0f) > 0.001f) {
             pose.scale(fontScale, fontScale);
         }
@@ -160,7 +160,7 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
             }
         }
 
-        pose.popPose();
+        pose.popMatrix();
     }
 
     private void drawHudInfo(GuiGraphicsExtractor g, Minecraft c, int x, int y, float alpha, LyricTrack track, int lh) {
