@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
 
+import com.eostrehold.lyriclive.client.util.LyricUtils;
+
 public class LyricRenderer {
     private final TimelineManager timelineManager;
     private final PlaybackController playbackController;
@@ -24,6 +26,9 @@ public class LyricRenderer {
     private float smoothCenterIndex = -1f;
     private long lastRenderNanos;
     private float fadeInAlpha = 0f;
+    // 过渡动画
+    private int lastRenderedCenter = -1;
+    private float lineTransitionAlpha = 1f;
 
     // 信息栏淡入
 public LyricRenderer(TimelineManager timelineManager, PlaybackController playbackController,
@@ -42,14 +47,14 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
         if (!timelineManager.hasLyrics()) {
             smoothCenterIndex = -1f;
             fadeInAlpha = 0f;
+            lineTransitionAlpha = 1f;
+            lastRenderedCenter = -1;
             return;
         }
 
         Minecraft c = Minecraft.getInstance();
         int sw = c.getWindow().getGuiScaledWidth();
         int sh = c.getWindow().getGuiScaledHeight();
-        int baseX = config.getPixelX(sw);
-        int baseY = config.getPixelY(sh);
 
         long now = System.nanoTime();
         float dt = (now - lastRenderNanos) / 1_000_000_000f;
@@ -62,8 +67,32 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
             fadeInAlpha = 1f;
         }
 
-        float alpha = config.getOpacity() * fadeInAlpha;
-        int a = (int) (alpha * 255) & 0xFF;
+        // 歌词切换过渡（淡出/淡入）
+        List<LrcLyric> ctx = timelineManager.getCurrentLyricContext(2);
+        if (ctx.isEmpty()) return;
+
+        LrcLyric cur = timelineManager.getCurrentLyric();
+        int realCenter = ctx.indexOf(cur);
+        if (realCenter < 0) realCenter = 0;
+
+        if (realCenter != lastRenderedCenter && lastRenderedCenter >= 0) {
+            lineTransitionAlpha = 0f;
+        }
+        lastRenderedCenter = realCenter;
+
+        if (config.isFadeInOutEnabled()) {
+            float transitionSpeed = 1000f / Math.max(1, config.getFadeOutDuration());
+            lineTransitionAlpha = Math.min(1f, lineTransitionAlpha + dt * transitionSpeed);
+        } else {
+            lineTransitionAlpha = 1f;
+        }
+
+        float baseAlpha = config.getOpacity() * fadeInAlpha;
+        if (config.isFadeInOutEnabled()) {
+            baseAlpha *= lineTransitionAlpha;
+        }
+
+        int a = (int) (baseAlpha * 255) & 0xFF;
         int fc = (a << 24) | (config.getFontColor() & 0x00FFFFFF);
         int dc = ((a * 6 / 10) << 24) | 0x00AAAAAA;
         int manualColor = ((a * 9 / 10) << 24) | 0x00FFFF00;
@@ -71,20 +100,25 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
         LyricTrack track = timelineManager.getCurrentTrack();
         int mi = manualIndexSupplier.getAsInt();
 
-        int lh = 11;
+        // 字体缩放
+        float fontScale = config.getFontSize() / 16.0f;
+        int lh = Math.max(1, Math.round(11 / fontScale));
 
-        // ---- 歌词上下文 (auto ±2 lines) ----
-        List<LrcLyric> ctx = timelineManager.getCurrentLyricContext(2);
-        if (ctx.isEmpty()) return;
+        // 应用矩阵缩放
+        var pose = g.pose();
+        pose.push();
+        if (Math.abs(fontScale - 1.0f) > 0.001f) {
+            pose.scale(fontScale, fontScale, 1.0f);
+        }
 
+        int baseX = Math.round(config.getPixelX(sw) / fontScale);
+        int baseY = Math.round(config.getPixelY(sh) / fontScale);
+
+        // 信息栏
         int infoY = baseY + ctx.size() * lh + 4;
-        drawHudInfo(g, c, baseX, infoY, alpha, track);
+        drawHudInfo(g, c, baseX, infoY, baseAlpha, track, lh);
 
-        LrcLyric cur = timelineManager.getCurrentLyric();
-        int realCenter = ctx.indexOf(cur);
-        if (realCenter < 0) realCenter = 0;
-
-        // 丝滑滚动：lerp smoothCenterIndex -> realCenter
+        // 丝滑滚动
         if (smoothCenterIndex < 0) {
             smoothCenterIndex = realCenter;
         }
@@ -115,40 +149,42 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
             String text = prefix + l.getText();
             float lineY = baseY + (i - smoothCenterIndex) * lh;
 
-            // 透明度随距离衰减
             float distFromCenter = Math.abs(i - smoothCenterIndex);
             float distFade = Math.max(0.3f, 1f - distFromCenter * 0.25f);
-            int finalAlpha = (int) ((alpha * distFade) * 255) & 0xFF;
+            int finalAlpha = (int) ((baseAlpha * distFade) * 255) & 0xFF;
             int finalColor = (finalAlpha << 24) | (color & 0x00FFFFFF);
 
+            int shadowC = (finalAlpha << 24) | (config.getShadowColor() & 0x00FFFFFF);
+
             if (config.isCentered()) {
-                g.text(c.font, text, baseX - c.font.width(text) / 2, (int) lineY, finalColor, config.isShadowEnabled());
+                g.text(c.font, text, baseX - Math.round(c.font.width(text) / 2), Math.round(lineY), finalColor, shadowC, config.isShadowEnabled());
             } else {
-                g.text(c.font, text, baseX, (int) lineY, finalColor, config.isShadowEnabled());
+                g.text(c.font, text, baseX, Math.round(lineY), finalColor, shadowC, config.isShadowEnabled());
             }
         }
+
+        pose.pop();
     }
 
-    private void drawHudInfo(GuiGraphicsExtractor g, Minecraft c, int x, int y, float alpha, LyricTrack track) {
+    private void drawHudInfo(GuiGraphicsExtractor g, Minecraft c, int x, int y, float alpha, LyricTrack track, int lh) {
         int a = (int) (alpha * 255) & 0xFF;
         if (a < 4) return;
         int white = (a << 24) | 0xFFFFFF;
         int gray = (a << 24) | 0xAAAAAA;
         int green = (a << 24) | 0x55FF55;
         int red = (a << 24) | 0xFF5555;
-        int lh = 10;
         int row = 0;
 
         String name = track.getTitle() != null ? track.getTitle() : "";
         if (!name.isEmpty()) {
-            g.text(c.font, trunc(name, 22), x, y + row * lh, white, true);
+            g.text(c.font, LyricUtils.trunc(name, 22), x, y + row * lh, white, true);
             row++;
         }
 
         long curMs = playbackController.getCurrentTimeMillis();
         var lyrics = track.getLyrics();
         long totalMs = lyrics.isEmpty() ? 0 : lyrics.get(lyrics.size() - 1).getTimestamp();
-        g.text(c.font, fmtTime(curMs) + " / " + fmtTime(totalMs), x, y + row * lh, gray, true);
+        g.text(c.font, LyricUtils.fmtTime(curMs) + " / " + LyricUtils.fmtTime(totalMs), x, y + row * lh, gray, true);
         row++;
 
         String state = switch (playbackController.getState()) {
@@ -166,16 +202,6 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
 
         boolean auto = autoSendSupplier.getAsBoolean();
         g.text(c.font, auto ? "AUTO ON" : "AUTO OFF", x, y + row * lh, auto ? green : red, true);
-    }
-
-    private static String trunc(String s, int max) {
-        return s.length() > max ? s.substring(0, max - 1) + ".." : s;
-    }
-
-    private static String fmtTime(long ms) {
-        if (ms <= 0) return "00:00";
-        long sec = ms / 1000;
-        return String.format("%02d:%02d", sec / 60, sec % 60);
     }
 
     public DisplayConfig getConfig() { return config; }

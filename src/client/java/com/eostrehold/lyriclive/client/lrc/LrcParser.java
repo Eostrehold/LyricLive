@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +34,7 @@ public class LrcParser {
 
         LyricTrack track = new LyricTrack();
 
-        try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
             String line;
             int lineNumber = 0;
 

@@ -98,6 +98,8 @@ public class PlaybackController {
         this.offsetMillis = timeMs;
         if (state == PlaybackState.PLAYING) {
             startNanoTime = System.nanoTime();
+        } else if (state == PlaybackState.PAUSED) {
+            startNanoTime = pauseNanoTime;
         }
         LyricLive.LOGGER.info("设置起始时间: {}ms", timeMs);
     }
@@ -129,6 +131,8 @@ public class PlaybackController {
         this.offsetMillis = timeMs;
         if (state == PlaybackState.PLAYING) {
             startNanoTime = System.nanoTime();
+        } else if (state == PlaybackState.PAUSED) {
+            startNanoTime = pauseNanoTime;
         }
         LyricLive.LOGGER.info("跳转到: {}ms", timeMs);
     }

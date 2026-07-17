@@ -44,6 +44,7 @@ public class LyricLiveClient implements ClientModInitializer {
 
     private static int manualLyricIndex = -1;
     private static boolean autoSendEnabled = true;
+    private static int lastAutoSentIndex = -1;
 
     @Override
     public void onInitializeClient() {
@@ -106,6 +107,7 @@ public class LyricLiveClient implements ClientModInitializer {
         while (stopKey.consumeClick()) {
             playbackController.stop();
             manualLyricIndex = -1;
+            lastAutoSentIndex = -1;
         }
         while (sendLyricKey.consumeClick()) {
             manualSendCurrentLyric();
@@ -142,16 +144,31 @@ public class LyricLiveClient implements ClientModInitializer {
     }
 
     private void handleAutoLyricSending() {
-        if (!playbackController.isPlaying()) return;
-        if (!autoSendEnabled) return;
+        if (!playbackController.isPlaying() || !autoSendEnabled || !timelineManager.hasLyrics()) {
+            lastAutoSentIndex = -1;
+            return;
+        }
 
+        // getCurrentLyricText() 内部会通过 resolveCurrentLyricIndex() 更新 currentLyricIndex
         String cur = timelineManager.getCurrentLyricText();
-        if (cur == null || cur.isEmpty()) return;
+        if (cur == null || cur.isEmpty()) {
+            lastAutoSentIndex = -1;
+            return;
+        }
 
+        int idx = timelineManager.getCurrentLyricIndex();
+        if (idx < 0) return;
+        if (idx == lastAutoSentIndex) return;
+        lastAutoSentIndex = idx;
+
+        boolean sent;
         if (commandSender.isEnabled()) {
-            commandSender.sendLyric(cur);
+            sent = commandSender.sendLyric(cur);
         } else {
-            chatSender.sendLyric(cur);
+            sent = chatSender.sendLyric(cur);
+        }
+        if (!sent) {
+            LyricLive.LOGGER.warn("自动发送歌词失败: [{}] {}", idx, cur);
         }
     }
 
@@ -170,6 +187,7 @@ public class LyricLiveClient implements ClientModInitializer {
             timelineManager.loadLyricFile(path);
             currentLyricFile = path;
             manualLyricIndex = -1;
+            lastAutoSentIndex = -1;
             mainScreen.setCurrentLyricFile(path);
         } catch (IOException e) {
             LyricLive.LOGGER.error("加载歌词文件失败: {}", filePath, e);

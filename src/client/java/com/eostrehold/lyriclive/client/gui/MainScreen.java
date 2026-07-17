@@ -7,6 +7,8 @@ import com.eostrehold.lyriclive.client.lrc.LyricTrack;
 import com.eostrehold.lyriclive.client.sender.LyricSender;
 import com.eostrehold.lyriclive.client.LyricLiveClient;
 
+import com.eostrehold.lyriclive.client.util.LyricUtils;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -115,13 +117,13 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
         if (timelineManager.hasLyrics()) {
             LyricTrack track = timelineManager.getCurrentTrack();
             String name = currentLyricFile != null ? currentLyricFile.getFileName().toString() : "";
-            if (!name.isEmpty()) drawLeft(g, f, trunc("文件: " + name, 18), ix, iy + 24, C_GRAY);
-            if (track.getTitle() != null)  drawLeft(g, f, trunc("歌曲: " + track.getTitle(), 18), ix, iy + 36, C_GRAY);
-            if (track.getArtist() != null) drawLeft(g, f, trunc("演唱: " + track.getArtist(), 18), ix, iy + 48, C_GRAY);
+            if (!name.isEmpty()) drawLeft(g, f, LyricUtils.trunc("文件: " + name, 18), ix, iy + 24, C_GRAY);
+            if (track.getTitle() != null)  drawLeft(g, f, LyricUtils.trunc("歌曲: " + track.getTitle(), 18), ix, iy + 36, C_GRAY);
+            if (track.getArtist() != null) drawLeft(g, f, LyricUtils.trunc("演唱: " + track.getArtist(), 18), ix, iy + 48, C_GRAY);
 
             long cur = playbackController.getCurrentTimeMillis();
             long total = lastTimestamp();
-            drawLeft(g, f, "进度: " + fmtTime(cur) + " / " + fmtTime(total), ix, iy + 62, C_WHITE);
+            drawLeft(g, f, "进度: " + LyricUtils.fmtTime(cur) + " / " + LyricUtils.fmtTime(total), ix, iy + 62, C_WHITE);
         }
 
         // 歌词进度条
@@ -174,7 +176,8 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
     private void refreshFiles() {
         try {
             scanLyricDirectory();
-            rebuildFileButtons();
+            clearWidgets();
+            initFromCache();
             statusMessage = discoveredLrcFiles.isEmpty() ? "lyriclive/ 下未找到 .lrc 文件" : "已刷新歌词列表";
         } catch (IOException e) {
             statusMessage = "读取目录失败: " + e.getMessage();
@@ -193,7 +196,9 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
     }
 
     private void addLyricFileButtons() {
-        try { scanLyricDirectory(); } catch (IOException ignored) { return; }
+        if (discoveredLrcFiles.isEmpty()) {
+            try { scanLyricDirectory(); } catch (IOException ignored) { return; }
+        }
         int count = Math.min(discoveredLrcFiles.size(), 6);
         int rx = this.width / 2 - 130;
         for (int i = 0; i < count; i++) {
@@ -202,7 +207,43 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
         }
     }
 
-    private void rebuildFileButtons() { this.clearWidgets(); this.init(); }
+    private void initFromCache() {
+        super.init();
+
+        // top bar
+        loadRefreshButton = newButton("刷新列表", this.width / 2 - 65, 4, 130, this::refreshFiles);
+        settingsButton = newButton("设置", this.width - 55, 4, 50, this::openSettings);
+
+        // fine seek
+        int fineY = this.height - 65;
+        int fineX = (this.width - 5 * (BTN_W + 5)) / 2;
+        newButton("-10s", fineX, fineY, BTN_W, () -> seek(-10_000));
+        fineX += BTN_W + 5;
+        newButton("-1s",  fineX, fineY, BTN_W, () -> seek(-1_000));
+        fineX += BTN_W + 5;
+        newButton("◇",    fineX, fineY, BTN_W, () -> {});
+        fineX += BTN_W + 5;
+        newButton("+1s",  fineX, fineY, BTN_W, () -> seek(1_000));
+        fineX += BTN_W + 5;
+        newButton("+10s", fineX, fineY, BTN_W, () -> seek(10_000));
+
+        // main control
+        int ctrlY = fineY - BTN_H - 3;
+        int ctrlX = (this.width - 5 * (BTN_W + 5)) / 2;
+        chatSendToggleButton = newButton(chatSendLabel(), ctrlX, ctrlY, BTN_W, this::toggleChatSending);
+        ctrlX += BTN_W + 5;
+stopButton = newButton("停止",                ctrlX, ctrlY, BTN_W, this::stopPlayback);
+        ctrlX += BTN_W + 5;
+playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::togglePlayPause);
+
+        // 使用已缓存的 discoveredLrcFiles，不重新扫描
+        int count = Math.min(discoveredLrcFiles.size(), 6);
+        int rx = this.width / 2 - 130;
+        for (int i = 0; i < count; i++) {
+            Path p = discoveredLrcFiles.get(i);
+            newButton(p.getFileName().toString(), rx, 50 + i * 21, 260, () -> loadFile(p));
+        }
+    }
 
     private void loadFile(Path path) {
         try {
@@ -214,14 +255,6 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
         }
     }
 
-    private static String trunc(String s, int max) {
-        return s.length() > max ? s.substring(0, max - 1) + "…" : s;
-    }
-    private static String fmtTime(long ms) {
-        if (ms <= 0) return "00:00";
-        long sec = ms / 1000;
-        return String.format("%02d:%02d", sec / 60, sec % 60);
-    }
     private long lastTimestamp() {
         if (!timelineManager.hasLyrics()) return 0;
         var list = timelineManager.getCurrentTrack().getLyrics();
@@ -257,7 +290,7 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
         g.fill(barX, barY, barX + fillW, barY + PROGRESS_BAR_H, fgColor);
 
         // 时间文本
-        String timeText = fmtTime(cur) + " / " + fmtTime(total);
+        String timeText = LyricUtils.fmtTime(cur) + " / " + LyricUtils.fmtTime(total);
         g.text(f, timeText, barX + PROGRESS_BAR_W / 2 - f.width(timeText) / 2, barY - 12, C_WHITE, true);
     }
 
