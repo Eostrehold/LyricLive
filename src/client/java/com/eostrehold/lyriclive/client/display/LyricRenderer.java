@@ -100,15 +100,14 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
         LyricTrack track = timelineManager.getCurrentTrack();
         int mi = manualIndexSupplier.getAsInt();
 
-        // 字体缩放
+        // 字体缩放：通过矩阵栈缩放所有绘制内容
         float fontScale = config.getFontSize() / 16.0f;
         int lh = Math.max(1, Math.round(11 / fontScale));
 
-        // 应用矩阵缩放
         var pose = g.pose();
-        pose.push();
+        pose.pushPose();
         if (Math.abs(fontScale - 1.0f) > 0.001f) {
-            pose.scale(fontScale, fontScale, 1.0f);
+            pose.scale(fontScale, fontScale);
         }
 
         int baseX = Math.round(config.getPixelX(sw) / fontScale);
@@ -154,16 +153,14 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
             int finalAlpha = (int) ((baseAlpha * distFade) * 255) & 0xFF;
             int finalColor = (finalAlpha << 24) | (color & 0x00FFFFFF);
 
-            int shadowC = (finalAlpha << 24) | (config.getShadowColor() & 0x00FFFFFF);
-
             if (config.isCentered()) {
-                g.text(c.font, text, baseX - Math.round(c.font.width(text) / 2), Math.round(lineY), finalColor, shadowC, config.isShadowEnabled());
+                g.text(c.font, text, baseX - c.font.width(text) / 2, (int) lineY, finalColor, config.isShadowEnabled());
             } else {
-                g.text(c.font, text, baseX, Math.round(lineY), finalColor, shadowC, config.isShadowEnabled());
+                g.text(c.font, text, baseX, (int) lineY, finalColor, config.isShadowEnabled());
             }
         }
 
-        pose.pop();
+        pose.popPose();
     }
 
     private void drawHudInfo(GuiGraphicsExtractor g, Minecraft c, int x, int y, float alpha, LyricTrack track, int lh) {
