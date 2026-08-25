@@ -83,7 +83,7 @@ public class LyricLiveClient implements ClientModInitializer {
         HudElementRegistry.addLast(
                 Identifier.fromNamespaceAndPath(LyricLive.MOD_ID, "lyric_display"),
                 (context, dt) -> {
-                    if (Minecraft.getInstance().player != null && Minecraft.getInstance().screen == null) {
+                    if (Minecraft.getInstance().player != null && Minecraft.getInstance().gui.screen() == null) {
                         lyricRenderer.render(context);
                     }
                 });
@@ -98,7 +98,7 @@ public class LyricLiveClient implements ClientModInitializer {
 
     private void handleKeyBindings(Minecraft client) {
         while (openGuiKey.consumeClick()) {
-            if (client.screen == null) client.setScreen(mainScreen);
+            if (client.gui.screen() == null) client.gui.setScreen(mainScreen);
         }
         while (togglePlayPauseKey.consumeClick()) {
             if (playbackController.isPlaying()) playbackController.pause();

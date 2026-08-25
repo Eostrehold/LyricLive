@@ -170,7 +170,7 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
 
     private void openSettings() {
         assert this.minecraft != null;
-        this.minecraft.setScreen(new SettingsScreen(displayConfig, chatSender, commandSender, this));
+        this.minecraft.gui.setScreen(new SettingsScreen(displayConfig, chatSender, commandSender, this));
     }
 
     private void refreshFiles() {

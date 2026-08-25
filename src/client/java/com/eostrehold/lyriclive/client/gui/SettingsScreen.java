@@ -116,7 +116,7 @@ public class SettingsScreen extends Screen {
     @Override
     public void onClose() {
         save();
-        if (this.minecraft != null) this.minecraft.setScreen(parent);
+        if (this.minecraft != null) this.minecraft.gui.setScreen(parent);
     }
 
     private void save() {

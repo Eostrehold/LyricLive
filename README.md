@@ -4,13 +4,13 @@
 
 <p align="center">
   <a href="https://github.com/Eostrehold/LyricLive/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/Eostrehold/LyricLive/build.yml?style=flat-square&label=Build&color=5ABF6A" alt="Build"></a>
-  <a href="https://fabricmc.net"><img src="https://img.shields.io/badge/Minecraft-26.1.2-5ABF6A?style=flat-square&labelColor=1A1716" alt="Minecraft 26.1.2"></a>
+  <a href="https://fabricmc.net"><img src="https://img.shields.io/badge/Minecraft-26.2-5ABF6A?style=flat-square&labelColor=1A1716" alt="Minecraft 26.2"></a>
   <a href="https://fabricmc.net"><img src="https://img.shields.io/badge/Fabric-0.19.2B-D4A843?style=flat-square&labelColor=1A1716" alt="Fabric 0.19.3+"></a>
   <a href="https://jdk.java.net/25/"><img src="https://img.shields.io/badge/Java-25-6A5ACD?style=flat-square&labelColor=1A1716" alt="Java 25"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/MIT-A0988E?style=flat-square&labelColor=1A1716" alt="MIT License"></a>
 </p>
 
-LyricLive 是一个基于 **Fabric 26.1.2** 的纯客户端 Minecraft 模组。在游戏中举办卡拉 OK 与唱歌比赛时，导入 `.lrc` 歌词文件即可在 HUD 上实时显示歌词，并支持自动发送到聊天栏。
+LyricLive 是一个基于 **Fabric 26.2** 的纯客户端 Minecraft 模组。在游戏中举办卡拉 OK 与唱歌比赛时，导入 `.lrc` 歌词文件即可在 HUD 上实时显示歌词，并支持自动发送到聊天栏。
 
 ---
 
@@ -18,7 +18,7 @@ LyricLive 是一个基于 **Fabric 26.1.2** 的纯客户端 Minecraft 模组。�
 
 **5 步，即可在 Minecraft 开唱：**
 
-1. 安装 **Minecraft 26.1.2** + **Fabric Loader 0.19.3+**
+1. 安装 **Minecraft 26.2** + **Fabric Loader 0.19.3+**
 2. 将 LyricLive `.jar` 放入 `.minecraft/mods` 文件夹
 3. 启动游戏，按 **`L`** 打开 LyricLive 界面
 4. 选择 `.lrc` 歌词文件加载
@@ -131,9 +131,9 @@ LRC 文件 → LrcParser → LyricTrack → TimelineManager
 
 | 项目 | 版本 |
 |------|------|
-| Minecraft | 26.1.2 |
+| Minecraft | 26.2 |
 | Fabric Loader | 0.19.3 |
-| Fabric API | 0.154.0+26.1.2 |
+| Fabric API | 0.154.0+26.2 |
 | Java | 25 |
 | 构建 | Gradle + Fabric Loom 1.17 |
 
