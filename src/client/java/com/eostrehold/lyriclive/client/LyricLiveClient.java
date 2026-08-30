@@ -56,7 +56,7 @@ public class LyricLiveClient implements ClientModInitializer {
         commandSender.setEnabled(false);
         lyricRenderer = new LyricRenderer(timelineManager, playbackController, chatSender, displayConfig, () -> manualLyricIndex, () -> autoSendEnabled);
 
-        mainScreen = new MainScreen(playbackController, timelineManager, chatSender, commandSender, displayConfig);
+        mainScreen = null;
 
         CATEGORY = KeyMapping.Category.register(
                 Identifier.fromNamespaceAndPath(LyricLive.MOD_ID, "keys"));
@@ -96,9 +96,21 @@ public class LyricLiveClient implements ClientModInitializer {
         });
     }
 
+    /**
+     * 懒加载主界面。owo 的 UI 模型在资源重载完成后才会被 UIModelLoader 缓存，
+     * 若在客户端初始化早期创建 BaseUIModelScreen，模型加载会失败并触发
+     * UIErrorToast，而此时 Minecraft.gui 尚未就绪，导致 NPE。因此在首次按键打开时创建。
+     */
+    private static MainScreen getOrCreateMainScreen() {
+        if (mainScreen == null) {
+            mainScreen = new MainScreen(playbackController, timelineManager, chatSender, commandSender, displayConfig);
+        }
+        return mainScreen;
+    }
+
     private void handleKeyBindings(Minecraft client) {
         while (openGuiKey.consumeClick()) {
-            if (client.gui.screen() == null) client.gui.setScreen(mainScreen);
+            if (client.gui.screen() == null) client.gui.setScreen(getOrCreateMainScreen());
         }
         while (togglePlayPauseKey.consumeClick()) {
             if (playbackController.isPlaying()) playbackController.pause();
@@ -188,7 +200,7 @@ public class LyricLiveClient implements ClientModInitializer {
             currentLyricFile = path;
             manualLyricIndex = -1;
             lastAutoSentIndex = -1;
-            mainScreen.setCurrentLyricFile(path);
+            getOrCreateMainScreen().setCurrentLyricFile(path);
         } catch (IOException e) {
             LyricLive.LOGGER.error("加载歌词文件失败: {}", filePath, e);
         }
