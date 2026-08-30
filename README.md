@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/readme/hero.svg" width="100%" alt="LyricLive — 在 Minecraft 中举办卡拉 OK 与唱歌比赛">
+  <img src="./assets/readme/hero.svg" width="100%" alt="LyricLive - 在 Minecraft 中举办卡拉 OK 与唱歌比赛">
 </p>
 
 <p align="center">
@@ -10,7 +10,7 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/MIT-A0988E?style=flat-square&labelColor=1A1716" alt="MIT License"></a>
 </p>
 
-LyricLive 是一个基于 **Fabric 26.2** 的纯客户端 Minecraft 模组。在游戏中举办卡拉 OK 与唱歌比赛时，导入 `.lrc` 歌词文件即可在 HUD 上实时显示歌词，并支持自动发送到聊天栏。
+LyricLive 是一个基于 **Fabric 26.2** 的纯客户端 Minecraft 模组，用于在游戏中举办卡拉 OK 与唱歌比赛。导入 `.lrc` 歌词文件，即可在 HUD 上实时显示歌词，并可选自动发送到聊天栏。
 
 ---
 
@@ -34,17 +34,12 @@ LyricLive 是一个基于 **Fabric 26.2** 的纯客户端 Minecraft 模组。在
   <img src="./assets/readme/features.svg" width="100%" alt="LyricLive 六大核心功能">
 </p>
 
-**歌曲时间控制** — 播放 / 暂停 / 停止 / 快进。基于 `System.nanoTime()` 的高精度时间同步，支持手动 seek 与起始偏移设置。
-
-**LRC 歌词导入** — 解析标准 `.lrc` 文件，支持 `[mm:ss.SSS]` 毫秒级时间戳与 `[ti:]` `[ar:]` `[al:]` `[by:]` 元数据标签。多时间戳可指向同一行。支持运行时重新加载与切换。
-
-**图形化界面** — 按 `L` 键唤出主界面，歌词文件浏览、播放控制（含可点击进度条）、独立设置面板（位置 / 颜色 / 字体 / 透明度 / 动画）。
-
-**歌词 HUD 渲染** — 当前歌词 ± 前 2 行 + 后 2 行上下文，lerp 平滑滚动与淡入淡出动画，透明度随距离衰减，信息栏显示播放状态与时间。
-
-**自动发送** — 按 `J` 切换，时间轴驱动，支持聊天栏直发或带前缀指令发送。
-
-**手动发送** — 按 `K` 或 GUI 按钮随时发送当前歌词。自动发送开启时自动禁用手动，避免重复。
+**歌曲时间控制**：播放 / 暂停 / 停止 / 快进，基于 `System.nanoTime()` 的高精度时间同步，支持手动 seek 与起始偏移。
+**LRC 歌词导入**：解析标准 `.lrc` 文件，支持 `[mm:ss.SSS]` 毫秒级时间戳与 `[ti:]` `[ar:]` `[al:]` `[by:]` 元数据标签，多时间戳可指向同一行，支持运行时重新加载。
+**图形化界面**：按 `L` 键唤出主界面，包含歌词文件浏览、播放控制（含可点击进度条）与独立设置面板（位置 / 颜色 / 字体 / 透明度 / 动画）。
+**歌词 HUD 渲染**：当前歌词 ± 前 2 行 + 后 2 行上下文，lerp 平滑滚动与淡入淡出动画，透明度随距离衰减，信息栏显示播放状态与时间。
+**自动发送**：按 `J` 切换，时间轴驱动，支持聊天栏直发或带前缀指令发送。
+**手动发送**：按 `K` 或 GUI 按钮随时发送当前歌词，自动发送开启时自动禁用手动以避免重复。
 
 ---
 
@@ -79,10 +74,10 @@ LRC 文件 → LrcParser → LyricTrack → TimelineManager
 
 **各层职责**
 
-- **LRC 解析层** — `LrcParser` 将 `.lrc` 文件解析为 `LyricTrack`，包含有序歌词列表与元数据。
-- **核心控制层** — `PlaybackController` 管理播放状态（播放 / 暂停 / 停止 / seek）；`TimelineManager` 通过二分查找匹配当前时间戳对应的歌词行。
-- **显示层** — `LyricRenderer` 在游戏 HUD 上渲染歌词，支持滚动动画与淡入淡出。
-- **发送层** — `LyricSender` 将歌词发送到聊天栏，支持自动 / 手动两种模式。
+- **LRC 解析层**：`LrcParser` 将 `.lrc` 文件解析为 `LyricTrack`，包含有序歌词列表与元数据。
+- **核心控制层**：`PlaybackController` 管理播放状态（播放 / 暂停 / 停止 / seek）；`TimelineManager` 通过二分查找匹配当前时间戳对应的歌词行。
+- **显示层**：`LyricRenderer` 在游戏 HUD 上渲染歌词，支持滚动动画与淡入淡出。
+- **发送层**：`LyricSender` 将歌词发送到聊天栏，支持自动 / 手动两种模式。
 
 ---
 
@@ -92,10 +87,10 @@ LRC 文件 → LrcParser → LyricTrack → TimelineManager
 
 | 选项 | 说明 | 范围 |
 |------|------|------|
-| X / Y 位置 | 歌词在屏幕上的位置 | 0.0 – 1.0 |
-| 字体大小 | 歌词字体 | 8 – 64 |
-| 字体颜色 | 十六进制颜色值 | `#000000` – `#FFFFFF` |
-| 透明度 | 歌词不透明度 | 0.0 – 1.0 |
+| X / Y 位置 | 歌词在屏幕上的位置 | 0.0 - 1.0 |
+| 字体大小 | 歌词字体 | 8 - 64 |
+| 字体颜色 | 十六进制颜色值 | `#000000` - `#FFFFFF` |
+| 透明度 | 歌词不透明度 | 0.0 - 1.0 |
 | 阴影 | 文字阴影 | 开 / 关 |
 | 居中 | 居中显示 | 开 / 关 |
 | 渐入渐出 | 淡入淡出动画 | 开 / 关 |

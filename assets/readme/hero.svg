@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="heroTitle heroDesc">
-  <title id="heroTitle">LyricLive — 在 Minecraft 中举办卡拉 OK 与唱歌比赛</title>
+  <title id="heroTitle">LyricLive - 在 Minecraft 中举办卡拉 OK 与唱歌比赛</title>
   <desc id="heroDesc">LyricLive 是一个基于 Fabric 的纯客户端 Minecraft 模组，导入 LRC 歌词文件后通过 HUD 在游戏画面中实时显示，并支持自动发送到聊天栏。</desc>
 
   <defs>
