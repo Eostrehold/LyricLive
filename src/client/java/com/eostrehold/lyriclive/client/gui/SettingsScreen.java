@@ -3,144 +3,118 @@ package com.eostrehold.lyriclive.client.gui;
 import com.eostrehold.lyriclive.LyricLive;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.sender.LyricSender;
-
+import io.wispforest.owo.ui.base.BaseUIModelScreen;
+import io.wispforest.owo.ui.component.ButtonComponent;
+import io.wispforest.owo.ui.component.CheckboxComponent;
+import io.wispforest.owo.ui.component.DiscreteSliderComponent;
+import io.wispforest.owo.ui.component.TextBoxComponent;
+import io.wispforest.owo.ui.container.FlowLayout;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
-public class SettingsScreen extends Screen {
-    private static final int COL_LBL = 16;
-    private static final int COL_INP = 150;
-    private static final int COL_NTE = 240;
-    private static final int Y0     = 32;
-    private static final int RH     = 28;
+/**
+ * 设置界面。UI 结构由 {@code assets/lyriclive/owo_ui/settings_screen.xml} 定义，
+ * 本类负责配置项读写与保存。
+ */
+public class SettingsScreen extends BaseUIModelScreen<FlowLayout> {
 
-    private static final int C_W    = 0xFFFFFFFF;
-    private static final int C_Y    = 0xFFFFFF55;
-    private static final int C_G    = 0xFFCCCCCC;
+    private static final Identifier MODEL_ID = Identifier.fromNamespaceAndPath("lyriclive", "settings_screen");
 
-    private final DisplayConfig dc;
-    private final LyricSender cs;
-    private final LyricSender cmds;
+    private final DisplayConfig displayConfig;
+    private final LyricSender commandSender;
     private final Screen parent;
 
-    private EditBox posX, posY, size, color, opacity;
-    private EditBox prefixBox;
-    private Button shdTog, cenTog, fadeTog, cmdTog;
+    private DiscreteSliderComponent posXSlider;
+    private DiscreteSliderComponent posYSlider;
+    private DiscreteSliderComponent fontSizeSlider;
+    private DiscreteSliderComponent opacitySlider;
+    private TextBoxComponent colorInput;
+    private TextBoxComponent prefixInput;
+    private CheckboxComponent shadowCheck;
+    private CheckboxComponent centerCheck;
+    private CheckboxComponent fadeCheck;
+    private CheckboxComponent cmdCheck;
 
-    public SettingsScreen(DisplayConfig dc, LyricSender cs, LyricSender cmds, Screen parent) {
-        super(Component.literal("LyricLive 设置"));
-        this.dc = dc; this.cs = cs; this.cmds = cmds; this.parent = parent;
+    public SettingsScreen(DisplayConfig displayConfig, LyricSender chatSender, LyricSender commandSender,
+                          Screen parent) {
+        super(FlowLayout.class, MODEL_ID);
+        this.displayConfig = displayConfig;
+        this.commandSender = commandSender;
+        this.parent = parent;
     }
 
     @Override
-    protected void init() {
-        super.init();
+    protected void build(FlowLayout rootComponent) {
+        // 滑块
+        posXSlider = rootComponent.childById(DiscreteSliderComponent.class, "pos-x-slider");
+        posXSlider.setFromDiscreteValue(displayConfig.getPositionX() * 100);
+        posXSlider.onChanged().subscribe(value -> displayConfig.setPositionX((float) (value / 100.0)));
 
-        posX    = inp(0, String.valueOf(dc.getPositionX()));
-        posY    = inp(1, String.valueOf(dc.getPositionY()));
-        size    = inp(2, String.valueOf(dc.getFontSize()));
-        color   = inp(3, String.format("%06X", dc.getFontColor()));
-        opacity = inp(4, String.valueOf(dc.getOpacity()));
-        prefixBox = inp(5, cmds.getPrefix());
+        posYSlider = rootComponent.childById(DiscreteSliderComponent.class, "pos-y-slider");
+        posYSlider.setFromDiscreteValue(displayConfig.getPositionY() * 100);
+        posYSlider.onChanged().subscribe(value -> displayConfig.setPositionY((float) (value / 100.0)));
 
-        int ty = Y0 + 6 * RH + 4;
-        shdTog  = tog(0, ty, "文字阴影",   dc.isShadowEnabled(),     this::toggleShadow);
-        cenTog  = tog(1, ty, "居中显示",   dc.isCentered(),          this::toggleCenter);
-        fadeTog = tog(2, ty, "淡入淡出",   dc.isFadeInOutEnabled(),  this::toggleFade);
-        cmdTog  = tog(3, ty, "前缀发送",   cmds.isEnabled(),         this::toggleCmd);
+        fontSizeSlider = rootComponent.childById(DiscreteSliderComponent.class, "font-size-slider");
+        fontSizeSlider.setFromDiscreteValue(displayConfig.getFontSize());
+        fontSizeSlider.onChanged().subscribe(value -> displayConfig.setFontSize((int) Math.round(value)));
 
-        addRenderableWidget(Button.builder(Component.literal("保存并返回"), b -> onClose())
-                .bounds(this.width / 2 - 50, this.height - 28, 100, 20).build());
-    }
+        opacitySlider = rootComponent.childById(DiscreteSliderComponent.class, "opacity-slider");
+        opacitySlider.setFromDiscreteValue(displayConfig.getOpacity() * 100);
+        opacitySlider.onChanged().subscribe(value -> displayConfig.setOpacity((float) (value / 100.0)));
 
-    @Override
-    public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float pt) {
-        Font f = Minecraft.getInstance().font;
-        g.fill(0, 0, this.width, this.height, 0xC0101010);
+        // 文本框
+        colorInput = rootComponent.childById(TextBoxComponent.class, "color-input");
+        colorInput.text(String.format("%06X", displayConfig.getFontColor()));
 
-        String title = "LyricLive 设置";
-        g.text(f, title, this.width / 2 - f.width(title) / 2, 8, C_Y, true);
-        super.extractRenderState(g, mx, my, pt);
+        prefixInput = rootComponent.childById(TextBoxComponent.class, "prefix-input");
+        prefixInput.text(commandSender.getPrefix());
 
-        for (int i = 0; i < 6; i++) {
-            int y = Y0 + i * RH + 5;
-            g.text(f, LBL[i], COL_LBL, y, C_W, true);
-            int nx = COL_NTE;
-            int nw = f.width(NTE[i]);
-            g.fill(nx - 2, y - 1, nx + nw + 4, y + f.lineHeight + 2, 0xAA333333);
-            g.text(f, NTE[i], nx, y, C_G, false);
-        }
-    }
+        // 复选框
+        shadowCheck = rootComponent.childById(CheckboxComponent.class, "shadow-check");
+        shadowCheck.checked(displayConfig.isShadowEnabled());
+        shadowCheck.onChanged(checked -> displayConfig.setShadowEnabled(checked));
 
-    private EditBox inp(int row, String val) {
-        Font f = Minecraft.getInstance().font;
-        EditBox b = new EditBox(f, COL_INP, Y0 + row * RH, row == 5 ? 120 : 50, 18, Component.empty());
-        b.setValue(val);
-        addRenderableWidget(b);
-        return b;
-    }
+        centerCheck = rootComponent.childById(CheckboxComponent.class, "center-check");
+        centerCheck.checked(displayConfig.isCentered());
+        centerCheck.onChanged(checked -> displayConfig.setCentered(checked));
 
-    private Button tog(int col, int y, String label, boolean on, Runnable action) {
-        int x = COL_LBL + col * 90;
-        Button b = Button.builder(
-                Component.literal(label + (on ? ": 开" : ": 关")),
-                btn -> action.run()
-        ).bounds(x, y, 80, 20).build();
-        addRenderableWidget(b);
-        return b;
-    }
+        fadeCheck = rootComponent.childById(CheckboxComponent.class, "fade-check");
+        fadeCheck.checked(displayConfig.isFadeInOutEnabled());
+        fadeCheck.onChanged(checked -> displayConfig.setFadeInOutEnabled(checked));
 
-    // toggles
-    private void toggleShadow() {
-        dc.setShadowEnabled(!dc.isShadowEnabled());
-        shdTog.setMessage(Component.literal("文字阴影: " + (dc.isShadowEnabled() ? "开" : "关")));
-    }
-    private void toggleCenter() {
-        dc.setCentered(!dc.isCentered());
-        cenTog.setMessage(Component.literal("居中显示: " + (dc.isCentered() ? "开" : "关")));
-    }
-    private void toggleFade() {
-        dc.setFadeInOutEnabled(!dc.isFadeInOutEnabled());
-        fadeTog.setMessage(Component.literal("淡入淡出: " + (dc.isFadeInOutEnabled() ? "开" : "关")));
-    }
-    private void toggleCmd() {
-        cmds.setEnabled(!cmds.isEnabled());
-        cmdTog.setMessage(Component.literal("前缀发送: " + (cmds.isEnabled() ? "开" : "关")));
+        cmdCheck = rootComponent.childById(CheckboxComponent.class, "cmd-check");
+        cmdCheck.checked(commandSender.isEnabled());
+        cmdCheck.onChanged(checked -> commandSender.setEnabled(checked));
+
+        // 保存并返回
+        rootComponent.childById(ButtonComponent.class, "save-button").onPress(button -> onClose());
     }
 
     @Override
     public void onClose() {
         save();
-        if (this.minecraft != null) this.minecraft.gui.setScreen(parent);
+        if (this.minecraft != null) {
+            this.minecraft.gui.setScreen(parent);
+        }
     }
 
     private void save() {
         try {
-            dc.setPositionX(Float.parseFloat(posX.getValue()));
-            dc.setPositionY(Float.parseFloat(posY.getValue()));
-            dc.setFontSize(Integer.parseInt(size.getValue()));
-            dc.setFontColor(Integer.parseInt(color.getValue().replace("#", ""), 16));
-            dc.setOpacity(Float.parseFloat(opacity.getValue()));
-            cmds.setPrefix(prefixBox.getValue());
+            displayConfig.setPositionX((float) (posXSlider.discreteValue() / 100.0));
+            displayConfig.setPositionY((float) (posYSlider.discreteValue() / 100.0));
+            displayConfig.setFontSize((int) Math.round(fontSizeSlider.discreteValue()));
+            displayConfig.setOpacity((float) (opacitySlider.discreteValue() / 100.0));
+            displayConfig.setFontColor(Integer.parseInt(colorInput.getValue().replace("#", ""), 16));
+            commandSender.setPrefix(prefixInput.getValue());
         } catch (NumberFormatException ignored) {
             LyricLive.LOGGER.warn("设置输入值不合法，已忽略");
         }
-        dc.save(Minecraft.getInstance().gameDirectory.toPath().resolve("config/lyriclive/display.json"));
+        displayConfig.save(Minecraft.getInstance().gameDirectory.toPath().resolve("config/lyriclive/display.json"));
     }
 
-    private static final String[] LBL = {
-        "X 位置", "Y 位置", "字体大小", "字体颜色", "不透明度", "发送前缀"
-    };
-    private static final String[] NTE = {
-        "0.0~1.0  0.5=居中", "0.0~1.0  0.8=偏下",
-        "像素 8~64", "RGB 十六进制 如 FFFFFF=白",
-        "0.0~1.0  1.0=不透明", "发到聊天栏时会附加在歌词前"
-    };
-
-    @Override public boolean isPauseScreen() { return false; }
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
 }

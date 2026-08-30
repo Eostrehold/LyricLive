@@ -1,21 +1,22 @@
 package com.eostrehold.lyriclive.client.gui;
 
+import com.eostrehold.lyriclive.client.LyricLiveClient;
 import com.eostrehold.lyriclive.client.core.PlaybackController;
 import com.eostrehold.lyriclive.client.core.TimelineManager;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
+import com.eostrehold.lyriclive.client.gui.component.ProgressBarComponent;
 import com.eostrehold.lyriclive.client.lrc.LyricTrack;
 import com.eostrehold.lyriclive.client.sender.LyricSender;
-import com.eostrehold.lyriclive.client.LyricLiveClient;
-
 import com.eostrehold.lyriclive.client.util.LyricUtils;
-
+import io.wispforest.owo.ui.base.BaseUIModelScreen;
+import io.wispforest.owo.ui.component.ButtonComponent;
+import io.wispforest.owo.ui.component.LabelComponent;
+import io.wispforest.owo.ui.component.UIComponents;
+import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Color;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,14 +26,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class MainScreen extends Screen {
-    private static final int BTN_W = 120;
-    private static final int BTN_H = 20;
-    private static final int C_WHITE  = 0xFFFFFFFF;
-    private static final int C_YELLOW = 0xFFFFFF55;
-    private static final int C_GRAY   = 0xFFAAAAAA;
-    private static final int C_GREEN  = 0xFF55FF55;
-    private static final int C_RED    = 0xFFFF5555;
+/**
+ * 主控制界面。UI 结构由 {@code assets/lyriclive/owo_ui/main_screen.xml} 定义，
+ * 本类负责事件绑定与动态内容。
+ */
+public class MainScreen extends BaseUIModelScreen<FlowLayout> {
+
+    private static final Identifier MODEL_ID = Identifier.fromNamespaceAndPath("lyriclive", "main_screen");
 
     private final PlaybackController playbackController;
     private final TimelineManager timelineManager;
@@ -40,28 +40,25 @@ public class MainScreen extends Screen {
     private final LyricSender chatSender;
     private final LyricSender commandSender;
 
-    private Button playPauseButton;
-    private Button stopButton;
-    private Button chatSendToggleButton;
-    private Button settingsButton;
-    private Button loadRefreshButton;
-
     private List<Path> discoveredLrcFiles = new ArrayList<>();
     private Path currentLyricFile;
     private String statusMessage = "请将 .lrc 放入 lyriclive/ 后点[刷新列表]";
 
-    // 进度条配置
-    private static final int PROGRESS_BAR_H = 8;
-    private static final int PROGRESS_BAR_W = 260;
-    private static final int PROGRESS_BAR_MARGIN_BOTTOM = 10;
-    private static final int C_PROGRESS_BG = 0xFF333333;
-    private static final int C_PROGRESS_FG = 0xFF55FF55;
-    private static final int C_PROGRESS_HOVER = 0xFF77FF77;
+    private FlowLayout lyricList;
+    private ButtonComponent playPauseButton;
+    private ButtonComponent chatSendToggleButton;
+    private LabelComponent statusLabel;
+    private LabelComponent autoSendLabel;
+    private LabelComponent fileLabel;
+    private LabelComponent titleLabel;
+    private LabelComponent artistLabel;
+    private LabelComponent progressLabel;
+    private LabelComponent statusMessageLabel;
 
     public MainScreen(PlaybackController playbackController, TimelineManager timelineManager,
                       LyricSender chatSender, LyricSender commandSender,
                       DisplayConfig displayConfig) {
-        super(Component.literal("LyricLive"));
+        super(FlowLayout.class, MODEL_ID);
         this.playbackController = playbackController;
         this.timelineManager = timelineManager;
         this.displayConfig = displayConfig;
@@ -70,103 +67,130 @@ public class MainScreen extends Screen {
     }
 
     @Override
-    protected void init() {
-        super.init();
+    protected void build(FlowLayout rootComponent) {
+        // 顶部工具条
+        rootComponent.childById(ButtonComponent.class, "refresh-button").onPress(button -> refreshFiles());
+        rootComponent.childById(ButtonComponent.class, "settings-button").onPress(button -> openSettings());
 
-        // top bar
-        loadRefreshButton = newButton("刷新列表", this.width / 2 - 65, 4, 130, this::refreshFiles);
-        settingsButton = newButton("设置", this.width - 55, 4, 50, this::openSettings);
+        // 主控制
+        chatSendToggleButton = rootComponent.childById(ButtonComponent.class, "chat-toggle-button");
+        chatSendToggleButton.onPress(button -> toggleChatSending());
+        rootComponent.childById(ButtonComponent.class, "stop-button").onPress(button -> stopPlayback());
+        playPauseButton = rootComponent.childById(ButtonComponent.class, "play-pause-button");
+        playPauseButton.onPress(button -> togglePlayPause());
 
-        // fine seek
-        int fineY = this.height - 65;
-        int fineX = (this.width - 5 * (BTN_W + 5)) / 2;
-        newButton("-10s", fineX, fineY, BTN_W, () -> seek(-10_000));
-        fineX += BTN_W + 5;
-        newButton("-1s",  fineX, fineY, BTN_W, () -> seek(-1_000));
-        fineX += BTN_W + 5;
-        newButton("◇",    fineX, fineY, BTN_W, () -> {});
-        fineX += BTN_W + 5;
-        newButton("+1s",  fineX, fineY, BTN_W, () -> seek(1_000));
-        fineX += BTN_W + 5;
-        newButton("+10s", fineX, fineY, BTN_W, () -> seek(10_000));
+        // 微调
+        rootComponent.childById(ButtonComponent.class, "seek-10-back").onPress(button -> seek(-10_000));
+        rootComponent.childById(ButtonComponent.class, "seek-1-back").onPress(button -> seek(-1_000));
+        rootComponent.childById(ButtonComponent.class, "seek-center").onPress(button -> {});
+        rootComponent.childById(ButtonComponent.class, "seek-1-forward").onPress(button -> seek(1_000));
+        rootComponent.childById(ButtonComponent.class, "seek-10-forward").onPress(button -> seek(10_000));
 
-        // main control
-        int ctrlY = fineY - BTN_H - 3;
-        int ctrlX = (this.width - 5 * (BTN_W + 5)) / 2;
-        chatSendToggleButton = newButton(chatSendLabel(), ctrlX, ctrlY, BTN_W, this::toggleChatSending);
-        ctrlX += BTN_W + 5;
-stopButton = newButton("停止",                ctrlX, ctrlY, BTN_W, this::stopPlayback);
-        ctrlX += BTN_W + 5;
-playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::togglePlayPause);
-        addLyricFileButtons();
+        // 信息栏
+        statusLabel = rootComponent.childById(LabelComponent.class, "status-label");
+        autoSendLabel = rootComponent.childById(LabelComponent.class, "auto-send-label");
+        fileLabel = rootComponent.childById(LabelComponent.class, "file-label");
+        titleLabel = rootComponent.childById(LabelComponent.class, "title-label");
+        artistLabel = rootComponent.childById(LabelComponent.class, "artist-label");
+        progressLabel = rootComponent.childById(LabelComponent.class, "progress-label");
+        statusMessageLabel = rootComponent.childById(LabelComponent.class, "status-message");
+
+        // 歌词列表容器
+        lyricList = rootComponent.childById(FlowLayout.class, "lyric-list");
+
+        // 注入自定义进度条
+        FlowLayout progressContainer = rootComponent.childById(FlowLayout.class, "progress-container");
+        progressContainer.horizontalAlignment(io.wispforest.owo.ui.core.HorizontalAlignment.CENTER);
+        progressContainer.child(new ProgressBarComponent(playbackController, timelineManager));
+
+        // 初始歌词列表
+        try {
+            scanLyricDirectory();
+            populateLyricList();
+        } catch (IOException e) {
+            statusMessage = "读取目录失败: " + e.getMessage();
+        }
+
+        refreshStaticLabels();
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float pt) {
-        Font f = Minecraft.getInstance().font;
-        g.fill(0, 0, this.width, this.height, 0x80000000);
-        super.extractRenderState(g, mx, my, pt);
+    public void tick() {
+        super.tick();
+        refreshDynamicLabels();
+    }
 
-        drawCentered(g, f, "LyricLive", this.width / 2, 6, C_YELLOW);
-
-        // 右侧信息栏
-        int ix = this.width - 145, iy = 24;
-        drawLeft(g, f, "状态: " + stateLabel(), ix, iy, C_WHITE);
-        drawLeft(g, f, "自动发送: " + (LyricLiveClient.isAutoSendEnabled() ? "开" : "关"), ix, iy + 11, LyricLiveClient.isAutoSendEnabled() ? C_GREEN : C_RED);
-
-        if (timelineManager.hasLyrics()) {
-            LyricTrack track = timelineManager.getCurrentTrack();
-            String name = currentLyricFile != null ? currentLyricFile.getFileName().toString() : "";
-            if (!name.isEmpty()) drawLeft(g, f, LyricUtils.trunc("文件: " + name, 18), ix, iy + 24, C_GRAY);
-            if (track.getTitle() != null)  drawLeft(g, f, LyricUtils.trunc("歌曲: " + track.getTitle(), 18), ix, iy + 36, C_GRAY);
-            if (track.getArtist() != null) drawLeft(g, f, LyricUtils.trunc("演唱: " + track.getArtist(), 18), ix, iy + 48, C_GRAY);
-
-            long cur = playbackController.getCurrentTimeMillis();
-            long total = lastTimestamp();
-            drawLeft(g, f, "进度: " + LyricUtils.fmtTime(cur) + " / " + LyricUtils.fmtTime(total), ix, iy + 62, C_WHITE);
+    private void refreshStaticLabels() {
+        if (playPauseButton != null) {
+            playPauseButton.setMessage(Component.literal(playLabel()));
+            chatSendToggleButton.setMessage(Component.literal(chatSendLabel()));
         }
-
-        // 歌词进度条
-        if (timelineManager.hasLyrics()) {
-            drawProgressBar(g, mx, my);
-        }
-
-        // 状态提示
-        if (statusMessage != null && !statusMessage.isEmpty()) {
-            drawLeft(g, f, statusMessage, 10, this.height - 14, C_GRAY);
+        if (statusMessageLabel != null) {
+            statusMessageLabel.text(Component.literal(statusMessage));
         }
     }
 
-    private Button newButton(String text, int x, int y, int w, Runnable action) {
-        Button b = Button.builder(Component.literal(text), btn -> action.run()).bounds(x, y, w, BTN_H).build();
-        addRenderableWidget(b);
-        return b;
+    private void refreshDynamicLabels() {
+        if (statusLabel == null) return;
+
+        statusLabel.text(Component.literal("状态: " + stateLabel()));
+
+        boolean autoSend = LyricLiveClient.isAutoSendEnabled();
+        autoSendLabel.text(Component.literal("自动发送: " + (autoSend ? "开" : "关")))
+                .color(autoSend ? Color.ofRgb(0x55FF55) : Color.ofRgb(0xFF5555));
+
+        LyricTrack track = timelineManager.hasLyrics() ? timelineManager.getCurrentTrack() : null;
+        String name = currentLyricFile != null ? currentLyricFile.getFileName().toString() : "";
+        fileLabel.text(Component.literal(name.isEmpty() ? "文件: -" : "文件: " + LyricUtils.trunc(name, 18)));
+        titleLabel.text(Component.literal(track != null && track.getTitle() != null
+                ? "歌曲: " + LyricUtils.trunc(track.getTitle(), 18) : "歌曲: -"));
+        artistLabel.text(Component.literal(track != null && track.getArtist() != null
+                ? "演唱: " + LyricUtils.trunc(track.getArtist(), 18) : "演唱: -"));
+
+        long current = playbackController.getCurrentTimeMillis();
+        long total = timelineManager.hasLyrics() ? lastTimestamp() : 0;
+        progressLabel.text(Component.literal(
+                "进度: " + LyricUtils.fmtTime(current) + " / " + LyricUtils.fmtTime(total)));
     }
 
     private String stateLabel() {
         return switch (playbackController.getState()) {
             case PLAYING -> "播放中";
-            case PAUSED  -> "已暂停";
+            case PAUSED -> "已暂停";
             case STOPPED -> "已停止";
         };
     }
-    private String playLabel() { return playbackController.isPlaying() ? "暂停" : "播放"; }
-    private String chatSendLabel() { return LyricLiveClient.isAutoSendEnabled() ? "自动发: 开" : "自动发: 关"; }
+
+    private String playLabel() {
+        return playbackController.isPlaying() ? "暂停" : "播放";
+    }
+
+    private String chatSendLabel() {
+        return LyricLiveClient.isAutoSendEnabled() ? "自动发送: 开" : "自动发送: 关";
+    }
 
     private void togglePlayPause() {
-        if (playbackController.isPlaying()) playbackController.pause();
-        else playbackController.play();
-        playPauseButton.setMessage(Component.literal(playLabel()));
+        if (playbackController.isPlaying()) {
+            playbackController.pause();
+        } else {
+            playbackController.play();
+        }
+        refreshStaticLabels();
     }
+
     private void stopPlayback() {
         playbackController.stop();
-        playPauseButton.setMessage(Component.literal(playLabel()));
+        refreshStaticLabels();
     }
+
     private void toggleChatSending() {
         LyricLiveClient.setAutoSendEnabled(!LyricLiveClient.isAutoSendEnabled());
-        chatSendToggleButton.setMessage(Component.literal(chatSendLabel()));
+        refreshStaticLabels();
     }
-    private void seek(long deltaMs) { playbackController.seek(deltaMs); }
+
+    private void seek(long deltaMs) {
+        playbackController.seek(deltaMs);
+    }
 
     private void openSettings() {
         assert this.minecraft != null;
@@ -176,72 +200,30 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
     private void refreshFiles() {
         try {
             scanLyricDirectory();
-            clearWidgets();
-            initFromCache();
+            populateLyricList();
             statusMessage = discoveredLrcFiles.isEmpty() ? "lyriclive/ 下未找到 .lrc 文件" : "已刷新歌词列表";
         } catch (IOException e) {
             statusMessage = "读取目录失败: " + e.getMessage();
         }
+        refreshStaticLabels();
     }
 
     private void scanLyricDirectory() throws IOException {
         Path dir = Minecraft.getInstance().gameDirectory.toPath().resolve("lyriclive");
         Files.createDirectories(dir);
-        try (Stream<Path> s = Files.list(dir)) {
-            discoveredLrcFiles = s.filter(Files::isRegularFile)
+        try (Stream<Path> stream = Files.list(dir)) {
+            discoveredLrcFiles = stream.filter(Files::isRegularFile)
                     .filter(p -> p.getFileName().toString().toLowerCase().endsWith(".lrc"))
                     .sorted(Comparator.comparing(p -> p.getFileName().toString().toLowerCase()))
                     .toList();
         }
     }
 
-    private void addLyricFileButtons() {
-        if (discoveredLrcFiles.isEmpty()) {
-            try { scanLyricDirectory(); } catch (IOException ignored) { return; }
-        }
-        int count = Math.min(discoveredLrcFiles.size(), 6);
-        int rx = this.width / 2 - 130;
-        for (int i = 0; i < count; i++) {
-            Path p = discoveredLrcFiles.get(i);
-            newButton(p.getFileName().toString(), rx, 50 + i * 21, 260, () -> loadFile(p));
-        }
-    }
-
-    private void initFromCache() {
-        super.init();
-
-        // top bar
-        loadRefreshButton = newButton("刷新列表", this.width / 2 - 65, 4, 130, this::refreshFiles);
-        settingsButton = newButton("设置", this.width - 55, 4, 50, this::openSettings);
-
-        // fine seek
-        int fineY = this.height - 65;
-        int fineX = (this.width - 5 * (BTN_W + 5)) / 2;
-        newButton("-10s", fineX, fineY, BTN_W, () -> seek(-10_000));
-        fineX += BTN_W + 5;
-        newButton("-1s",  fineX, fineY, BTN_W, () -> seek(-1_000));
-        fineX += BTN_W + 5;
-        newButton("◇",    fineX, fineY, BTN_W, () -> {});
-        fineX += BTN_W + 5;
-        newButton("+1s",  fineX, fineY, BTN_W, () -> seek(1_000));
-        fineX += BTN_W + 5;
-        newButton("+10s", fineX, fineY, BTN_W, () -> seek(10_000));
-
-        // main control
-        int ctrlY = fineY - BTN_H - 3;
-        int ctrlX = (this.width - 5 * (BTN_W + 5)) / 2;
-        chatSendToggleButton = newButton(chatSendLabel(), ctrlX, ctrlY, BTN_W, this::toggleChatSending);
-        ctrlX += BTN_W + 5;
-stopButton = newButton("停止",                ctrlX, ctrlY, BTN_W, this::stopPlayback);
-        ctrlX += BTN_W + 5;
-playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::togglePlayPause);
-
-        // 使用已缓存的 discoveredLrcFiles，不重新扫描
-        int count = Math.min(discoveredLrcFiles.size(), 6);
-        int rx = this.width / 2 - 130;
-        for (int i = 0; i < count; i++) {
-            Path p = discoveredLrcFiles.get(i);
-            newButton(p.getFileName().toString(), rx, 50 + i * 21, 260, () -> loadFile(p));
+    private void populateLyricList() {
+        lyricList.clearChildren();
+        for (Path path : discoveredLrcFiles) {
+            String fileName = path.getFileName().toString();
+            lyricList.child(UIComponents.button(Component.literal(fileName), button -> loadFile(path)));
         }
     }
 
@@ -253,74 +235,21 @@ playPauseButton = newButton(playLabel(),      ctrlX, ctrlY, BTN_W, this::toggleP
         } catch (IOException e) {
             statusMessage = "加载失败: " + e.getMessage();
         }
+        refreshStaticLabels();
     }
 
     private long lastTimestamp() {
         if (!timelineManager.hasLyrics()) return 0;
-        var list = timelineManager.getCurrentTrack().getLyrics();
-        return list.isEmpty() ? 0 : list.get(list.size() - 1).getTimestamp();
-    }
-    private void drawLeft(GuiGraphicsExtractor g, Font f, String s, int x, int y, int c) {
-        g.text(f, s, x, y, c, true);
-    }
-    private void drawCentered(GuiGraphicsExtractor g, Font f, String s, int x, int y, int c) {
-        g.text(f, s, x - f.width(s) / 2, y, c, true);
+        var lyrics = timelineManager.getCurrentTrack().getLyrics();
+        return lyrics.isEmpty() ? 0 : lyrics.get(lyrics.size() - 1).getTimestamp();
     }
 
-    public void setCurrentLyricFile(Path file) { this.currentLyricFile = file; }
-    @Override public boolean isPauseScreen() { return false; }
-
-    private void drawProgressBar(GuiGraphicsExtractor g, int mx, int my) {
-        Font f = Minecraft.getInstance().font;
-        long cur = playbackController.getCurrentTimeMillis();
-        long total = lastTimestamp();
-        if (total <= 0) return;
-
-        int barX = (this.width - PROGRESS_BAR_W) / 2;
-        int barY = this.height - PROGRESS_BAR_MARGIN_BOTTOM - PROGRESS_BAR_H;
-
-        boolean hover = mx >= barX && mx <= barX + PROGRESS_BAR_W
-                     && my >= barY && my <= barY + PROGRESS_BAR_H;
-        int fgColor = hover ? C_PROGRESS_HOVER : C_PROGRESS_FG;
-
-        // 背景
-        g.fill(barX, barY, barX + PROGRESS_BAR_W, barY + PROGRESS_BAR_H, C_PROGRESS_BG);
-        // 进度
-        int fillW = (int) (PROGRESS_BAR_W * Math.min(1.0, (double) cur / total));
-        g.fill(barX, barY, barX + fillW, barY + PROGRESS_BAR_H, fgColor);
-
-        // 时间文本
-        String timeText = LyricUtils.fmtTime(cur) + " / " + LyricUtils.fmtTime(total);
-        g.text(f, timeText, barX + PROGRESS_BAR_W / 2 - f.width(timeText) / 2, barY - 12, C_WHITE, true);
+    public void setCurrentLyricFile(Path file) {
+        this.currentLyricFile = file;
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean isDoubleClick) {
-        double mouseX = event.x();
-        double mouseY = event.y();
-        int button = event.buttonInfo().button();
-
-        if (button != 0 || !timelineManager.hasLyrics()) {
-            return super.mouseClicked(event, isDoubleClick);
-        }
-
-        int barX = (this.width - PROGRESS_BAR_W) / 2;
-        int barY = this.height - PROGRESS_BAR_MARGIN_BOTTOM - PROGRESS_BAR_H;
-
-        if (mouseX >= barX && mouseX <= barX + PROGRESS_BAR_W
-                && mouseY >= barY && mouseY <= barY + PROGRESS_BAR_H) {
-            long total = lastTimestamp();
-            if (total > 0) {
-                double ratio = (mouseX - barX) / (double) PROGRESS_BAR_W;
-                long targetMs = (long) (total * Math.max(0.0, Math.min(1.0, ratio)));
-                playbackController.seekTo(targetMs);
-                if (!playbackController.isPlaying()) {
-                    playbackController.play();
-                }
-            }
-            return true;
-        }
-
-        return super.mouseClicked(event, isDoubleClick);
+    public boolean isPauseScreen() {
+        return false;
     }
 }
