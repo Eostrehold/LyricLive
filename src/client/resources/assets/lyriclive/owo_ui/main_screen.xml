@@ -1,0 +1,153 @@
+<owo-ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/wisp-forest/owo-lib/1.20/owo-ui.xsd">
+    <components>
+        <flow-layout direction="vertical">
+            <children>
+                <!-- 顶部工具条 -->
+                <flow-layout direction="horizontal">
+                    <children>
+                        <spacer percent="30"/>
+                        <button id="refresh-button">
+                            <text>刷新列表</text>
+                        </button>
+                        <spacer/>
+                        <button id="settings-button">
+                            <text>设置</text>
+                        </button>
+                    </children>
+                    <padding>
+                        <all>4</all>
+                    </padding>
+                </flow-layout>
+
+                <!-- 主体：歌词列表 + 右侧信息栏 -->
+                <flow-layout direction="horizontal">
+                    <children>
+                        <scroll direction="vertical" id="lyric-scroll">
+                            <flow-layout direction="vertical" id="lyric-list">
+                                <children/>
+                                <sizing>
+                                    <horizontal method="fill">100</horizontal>
+                                </sizing>
+                            </flow-layout>
+                            <sizing>
+                                <horizontal method="fill">45</horizontal>
+                                <vertical method="fill">60</vertical>
+                            </sizing>
+                            <scrollbar-thiccness>4</scrollbar-thiccness>
+                        </scroll>
+
+                        <spacer percent="20"/>
+
+                        <!-- 右侧信息栏 -->
+                        <flow-layout direction="vertical">
+                            <children>
+                                <label id="status-label">
+                                    <text>状态: 已停止</text>
+                                </label>
+                                <label id="auto-send-label">
+                                    <text>自动发送: 开</text>
+                                </label>
+                                <label id="file-label">
+                                    <text>文件: -</text>
+                                </label>
+                                <label id="title-label">
+                                    <text>歌曲: -</text>
+                                </label>
+                                <label id="artist-label">
+                                    <text>演唱: -</text>
+                                </label>
+                                <label id="progress-label">
+                                    <text>进度: 00:00 / 00:00</text>
+                                </label>
+                            </children>
+                            <sizing>
+                                <horizontal method="fixed">170</horizontal>
+                            </sizing>
+                            <padding>
+                                <left>8</left>
+                            </padding>
+                        </flow-layout>
+                    </children>
+                    <sizing>
+                        <horizontal method="fill">100</horizontal>
+                        <vertical method="fill">100</vertical>
+                    </sizing>
+                </flow-layout>
+
+                <!-- 主控制行 -->
+                <flow-layout direction="horizontal">
+                    <children>
+                        <spacer percent="20"/>
+                        <button id="chat-toggle-button">
+                            <text>自动发送: 开</text>
+                        </button>
+                        <button id="stop-button">
+                            <text>停止</text>
+                        </button>
+                        <button id="play-pause-button">
+                            <text>播放</text>
+                        </button>
+                        <spacer percent="20"/>
+                    </children>
+                    <padding>
+                        <all>4</all>
+                    </padding>
+                </flow-layout>
+
+                <!-- 微调行 -->
+                <flow-layout direction="horizontal">
+                    <children>
+                        <spacer percent="20"/>
+                        <button id="seek-10-back">
+                            <text>-10s</text>
+                        </button>
+                        <button id="seek-1-back">
+                            <text>-1s</text>
+                        </button>
+                        <button id="seek-center">
+                            <text>◇</text>
+                        </button>
+                        <button id="seek-1-forward">
+                            <text>+1s</text>
+                        </button>
+                        <button id="seek-10-forward">
+                            <text>+10s</text>
+                        </button>
+                        <spacer percent="20"/>
+                    </children>
+                    <padding>
+                        <all>4</all>
+                    </padding>
+                </flow-layout>
+
+                <!-- 进度条容器（Java 注入自定义组件） -->
+                <flow-layout direction="horizontal" id="progress-container">
+                    <children/>
+                    <sizing>
+                        <horizontal method="fill">100</horizontal>
+                        <vertical method="fixed">20</vertical>
+                    </sizing>
+                    <padding>
+                        <left>120</left>
+                        <right>120</right>
+                    </padding>
+                </flow-layout>
+
+                <!-- 底部状态提示 -->
+                <label id="status-message">
+                    <text>请将 .lrc 放入 lyriclive/ 后点[刷新列表]</text>
+                    <color>#AAAAAA</color>
+                </label>
+            </children>
+
+            <sizing>
+                <horizontal method="fill">100</horizontal>
+                <vertical method="fill">100</vertical>
+            </sizing>
+            <surface>
+                <vanilla-translucent/>
+            </surface>
+        </flow-layout>
+    </components>
+</owo-ui>

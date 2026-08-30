@@ -1,0 +1,146 @@
+<owo-ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/wisp-forest/owo-lib/1.20/owo-ui.xsd">
+    <components>
+        <flow-layout direction="vertical">
+            <children>
+                <!-- 标题 -->
+                <label>
+                    <text>LyricLive 设置</text>
+                    <color>#FFFF55</color>
+                    <horizontal-text-alignment>center</horizontal-text-alignment>
+                </label>
+
+                <!-- 设置滚动区 -->
+                <scroll direction="vertical">
+                    <flow-layout direction="vertical">
+                        <children>
+                            <!-- 位置分组 -->
+                            <collapsible expanded="true">
+                                <text>位置</text>
+                                <children>
+                                    <label>
+                                        <text>X 位置 (0.0~1.0)</text>
+                                    </label>
+                                    <discrete-slider id="pos-x-slider" min="0" max="100">
+                                        <decimal-places>0</decimal-places>
+                                        <sizing>
+                                            <horizontal method="fill">100</horizontal>
+                                        </sizing>
+                                    </discrete-slider>
+                                    <label>
+                                        <text>Y 位置 (0.0~1.0)</text>
+                                    </label>
+                                    <discrete-slider id="pos-y-slider" min="0" max="100">
+                                        <decimal-places>0</decimal-places>
+                                        <sizing>
+                                            <horizontal method="fill">100</horizontal>
+                                        </sizing>
+                                    </discrete-slider>
+                                </children>
+                            </collapsible>
+
+                            <!-- 样式分组 -->
+                            <collapsible expanded="true">
+                                <text>样式</text>
+                                <children>
+                                    <label>
+                                        <text>字体大小 (8~64)</text>
+                                    </label>
+                                    <discrete-slider id="font-size-slider" min="8" max="64">
+                                        <decimal-places>0</decimal-places>
+                                        <sizing>
+                                            <horizontal method="fill">100</horizontal>
+                                        </sizing>
+                                    </discrete-slider>
+                                    <label>
+                                        <text>字体颜色 (RGB 十六进制)</text>
+                                    </label>
+                                    <text-box id="color-input">
+                                        <text>FFFFFF</text>
+                                        <show-background>true</show-background>
+                                        <max-length>8</max-length>
+                                        <sizing>
+                                            <horizontal method="fixed">160</horizontal>
+                                        </sizing>
+                                    </text-box>
+                                    <label>
+                                        <text>不透明度 (0.0~1.0)</text>
+                                    </label>
+                                    <discrete-slider id="opacity-slider" min="0" max="100">
+                                        <decimal-places>0</decimal-places>
+                                        <sizing>
+                                            <horizontal method="fill">100</horizontal>
+                                        </sizing>
+                                    </discrete-slider>
+                                    <checkbox id="shadow-check">
+                                        <text>文字阴影</text>
+                                    </checkbox>
+                                    <checkbox id="center-check">
+                                        <text>居中显示</text>
+                                    </checkbox>
+                                    <checkbox id="fade-check">
+                                        <text>淡入淡出</text>
+                                    </checkbox>
+                                </children>
+                            </collapsible>
+
+                            <!-- 发送分组 -->
+                            <collapsible expanded="true">
+                                <text>发送</text>
+                                <children>
+                                    <label>
+                                        <text>发送前缀（附加在歌词前）</text>
+                                    </label>
+                                    <text-box id="prefix-input">
+                                        <text></text>
+                                        <show-background>true</show-background>
+                                        <max-length>32</max-length>
+                                        <sizing>
+                                            <horizontal method="fixed">160</horizontal>
+                                        </sizing>
+                                    </text-box>
+                                    <checkbox id="cmd-check">
+                                        <text>前缀发送</text>
+                                    </checkbox>
+                                </children>
+                            </collapsible>
+                        </children>
+                        <sizing>
+                            <horizontal method="fill">100</horizontal>
+                        </sizing>
+                        <padding>
+                            <right>12</right>
+                        </padding>
+                    </flow-layout>
+                    <sizing>
+                        <horizontal method="fill">100</horizontal>
+                        <vertical method="fill">100</vertical>
+                    </sizing>
+                    <scrollbar-thiccness>4</scrollbar-thiccness>
+                </scroll>
+
+                <!-- 保存按钮 -->
+                <flow-layout direction="horizontal">
+                    <children>
+                        <spacer percent="40"/>
+                        <button id="save-button">
+                            <text>保存并返回</text>
+                        </button>
+                        <spacer percent="40"/>
+                    </children>
+                    <padding>
+                        <all>6</all>
+                    </padding>
+                </flow-layout>
+            </children>
+
+            <sizing>
+                <horizontal method="fill">100</horizontal>
+                <vertical method="fill">100</vertical>
+            </sizing>
+            <surface>
+                <vanilla-translucent/>
+            </surface>
+        </flow-layout>
+    </components>
+</owo-ui>
