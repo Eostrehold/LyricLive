@@ -114,7 +114,7 @@
                     </flow-layout>
                     <sizing>
                         <horizontal method="fill">100</horizontal>
-                        <vertical method="fill">100</vertical>
+                        <vertical method="expand">100</vertical>
                     </sizing>
                     <scrollbar-thiccness>4</scrollbar-thiccness>
                 </scroll>
@@ -122,12 +122,14 @@
                 <!-- 保存按钮 -->
                 <flow-layout direction="horizontal">
                     <children>
-                        <spacer percent="40"/>
                         <button id="save-button">
                             <text>保存并返回</text>
                         </button>
-                        <spacer percent="40"/>
                     </children>
+                    <horizontal-alignment>center</horizontal-alignment>
+                    <sizing>
+                        <horizontal method="fill">100</horizontal>
+                    </sizing>
                     <padding>
                         <all>6</all>
                     </padding>
