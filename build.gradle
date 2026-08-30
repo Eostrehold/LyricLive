@@ -9,6 +9,8 @@ group = project.maven_group
 repositories {
 	// owo-lib (wisp forest) maven, see https://maven.wispforest.io/
 	maven { url 'https://maven.wispforest.io/releases/' }
+	// kdl4j (owo-lib transitive dependency) is hosted on JitPack
+	maven { url 'https://jitpack.io' }
 }
 
 loom {
