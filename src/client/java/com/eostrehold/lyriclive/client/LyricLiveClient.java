@@ -85,7 +85,7 @@ public class LyricLiveClient implements ClientModInitializer {
                 Identifier.fromNamespaceAndPath(LyricLive.MOD_ID, "lyric_display"),
                 (context, dt) -> {
                     Minecraft mc = Minecraft.getInstance();
-                    if (mc.player != null && mc.gui.screen() == null && !mc.options.hideGui) {
+                    if (mc.player != null && mc.gui.screen() == null) {
                         lyricRenderer.render(context);
                     }
                 });
@@ -100,8 +100,8 @@ public class LyricLiveClient implements ClientModInitializer {
 
     private static void showActionBar(String message) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.gui != null) {
-            mc.gui.setOverlayMessage(Component.literal(message), false);
+        if (mc.player != null) {
+            mc.player.displayClientMessage(Component.literal(message), true);
         }
     }
 

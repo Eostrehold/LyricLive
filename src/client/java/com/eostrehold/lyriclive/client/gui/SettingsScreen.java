@@ -1,6 +1,7 @@
 package com.eostrehold.lyriclive.client.gui;
 
 import com.eostrehold.lyriclive.LyricLive;
+import com.eostrehold.lyriclive.client.LyricLiveClient;
 import com.eostrehold.lyriclive.client.display.DisplayConfig;
 import com.eostrehold.lyriclive.client.sender.LyricSender;
 import io.wispforest.owo.ui.base.BaseUIModelScreen;
