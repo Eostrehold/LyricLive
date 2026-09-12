@@ -16,7 +16,7 @@ public class LyricSender {
     }
 
     /**
-     * 发送歌词到聊天栏
+     * 发送歌词到聊天栏或作为指令发送
      * @param lyricText 歌词文本
      * @return 是否成功发送
      */
@@ -27,9 +27,10 @@ public class LyricSender {
 
         Minecraft client = Minecraft.getInstance();
         if (client.player != null && client.getConnection() != null) {
-            client.getConnection().sendChat(prefix + lyricText);
+            String message = formatMessage(lyricText);
+            dispatchMessage(client, message);
             lastSentLyric = lyricText;
-            LyricLive.LOGGER.debug("歌词已发送: {}{}", prefix, lyricText);
+            LyricLive.LOGGER.debug("歌词已发送: {}", message);
             return true;
         }
         return false;
@@ -44,12 +45,28 @@ public class LyricSender {
 
         Minecraft client = Minecraft.getInstance();
         if (client.player != null && client.getConnection() != null) {
-            client.getConnection().sendChat(prefix + lyricText);
+            String message = formatMessage(lyricText);
+            dispatchMessage(client, message);
             lastSentLyric = lyricText;
-            LyricLive.LOGGER.debug("歌词已强制发送: {}{}", prefix, lyricText);
+            LyricLive.LOGGER.debug("歌词已强制发送: {}", message);
             return true;
         }
         return false;
+    }
+
+    private void dispatchMessage(Minecraft client, String message) {
+        if (message.startsWith("/")) {
+            client.getConnection().sendCommand(message.substring(1));
+        } else {
+            client.getConnection().sendChat(message);
+        }
+    }
+
+    private String formatMessage(String lyricText) {
+        if (prefix != null && prefix.contains("{lyric}")) {
+            return prefix.replace("{lyric}", lyricText);
+        }
+        return (prefix != null ? prefix : "") + lyricText;
     }
 
     public boolean isEnabled() { return enabled; }

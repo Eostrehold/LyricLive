@@ -100,17 +100,22 @@ public class SettingsScreen extends BaseUIModelScreen<FlowLayout> {
     }
 
     private void save() {
-        try {
-            displayConfig.setPositionX((float) (posXSlider.discreteValue() / 100.0));
-            displayConfig.setPositionY((float) (posYSlider.discreteValue() / 100.0));
-            displayConfig.setFontSize((int) Math.round(fontSizeSlider.discreteValue()));
-            displayConfig.setOpacity((float) (opacitySlider.discreteValue() / 100.0));
-            displayConfig.setFontColor(Integer.parseInt(colorInput.getValue().replace("#", ""), 16));
-            commandSender.setPrefix(prefixInput.getValue());
-        } catch (NumberFormatException ignored) {
-            LyricLive.LOGGER.warn("设置输入值不合法，已忽略");
+        if (posXSlider != null) displayConfig.setPositionX((float) (posXSlider.discreteValue() / 100.0));
+        if (posYSlider != null) displayConfig.setPositionY((float) (posYSlider.discreteValue() / 100.0));
+        if (fontSizeSlider != null) displayConfig.setFontSize((int) Math.round(fontSizeSlider.discreteValue()));
+        if (opacitySlider != null) displayConfig.setOpacity((float) (opacitySlider.discreteValue() / 100.0));
+        if (prefixInput != null) commandSender.setPrefix(prefixInput.getValue());
+        if (colorInput != null) {
+            try {
+                String colorStr = colorInput.getValue().replace("#", "").trim();
+                if (!colorStr.isEmpty()) {
+                    displayConfig.setFontColor(Integer.parseInt(colorStr, 16));
+                }
+            } catch (NumberFormatException ignored) {
+                LyricLive.LOGGER.warn("设置颜色值不合法，保持原有颜色: {}", colorInput.getValue());
+            }
         }
-        displayConfig.save(Minecraft.getInstance().gameDirectory.toPath().resolve("config/lyriclive/display.json"));
+        LyricLiveClient.saveDisplayConfig();
     }
 
     @Override

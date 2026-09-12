@@ -14,6 +14,7 @@ import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.UIComponents;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Color;
+import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -43,10 +44,12 @@ public class MainScreen extends BaseUIModelScreen<FlowLayout> {
     private List<Path> discoveredLrcFiles = new ArrayList<>();
     private Path currentLyricFile;
     private String statusMessage = "请将 .lrc 放入 lyriclive/ 后点[刷新列表]";
+    private boolean showLyricView = false;
 
     private FlowLayout lyricList;
     private ButtonComponent playPauseButton;
     private ButtonComponent chatSendToggleButton;
+    private ButtonComponent viewToggleButton;
     private LabelComponent statusLabel;
     private LabelComponent autoSendLabel;
     private LabelComponent fileLabel;
@@ -70,6 +73,10 @@ public class MainScreen extends BaseUIModelScreen<FlowLayout> {
     protected void build(FlowLayout rootComponent) {
         // 顶部工具条
         rootComponent.childById(ButtonComponent.class, "refresh-button").onPress(button -> refreshFiles());
+        viewToggleButton = rootComponent.childById(ButtonComponent.class, "view-toggle-button");
+        if (viewToggleButton != null) {
+            viewToggleButton.onPress(button -> toggleViewMode());
+        }
         rootComponent.childById(ButtonComponent.class, "settings-button").onPress(button -> openSettings());
 
         // 主控制
@@ -82,7 +89,7 @@ public class MainScreen extends BaseUIModelScreen<FlowLayout> {
         // 微调
         rootComponent.childById(ButtonComponent.class, "seek-10-back").onPress(button -> seek(-10_000));
         rootComponent.childById(ButtonComponent.class, "seek-1-back").onPress(button -> seek(-1_000));
-        rootComponent.childById(ButtonComponent.class, "seek-center").onPress(button -> {});
+        rootComponent.childById(ButtonComponent.class, "seek-center").onPress(button -> seekToCurrentLyricStart());
         rootComponent.childById(ButtonComponent.class, "seek-1-forward").onPress(button -> seek(1_000));
         rootComponent.childById(ButtonComponent.class, "seek-10-forward").onPress(button -> seek(10_000));
 
@@ -103,14 +110,14 @@ public class MainScreen extends BaseUIModelScreen<FlowLayout> {
         progressContainer.horizontalAlignment(io.wispforest.owo.ui.core.HorizontalAlignment.CENTER);
         progressContainer.child(new ProgressBarComponent(playbackController, timelineManager));
 
-        // 初始歌词列表
+        // 初始歌词/文件列表
         try {
             scanLyricDirectory();
-            populateLyricList();
         } catch (IOException e) {
             statusMessage = "读取目录失败: " + e.getMessage();
         }
 
+        updateListContent();
         refreshStaticLabels();
     }
 
@@ -124,6 +131,9 @@ public class MainScreen extends BaseUIModelScreen<FlowLayout> {
         if (playPauseButton != null) {
             playPauseButton.setMessage(Component.literal(playLabel()));
             chatSendToggleButton.setMessage(Component.literal(chatSendLabel()));
+        }
+        if (viewToggleButton != null) {
+            viewToggleButton.setMessage(Component.literal(showLyricView ? "文件列表" : "歌词列表"));
         }
         if (statusMessageLabel != null) {
             statusMessageLabel.text(Component.literal(statusMessage));
@@ -192,6 +202,41 @@ public class MainScreen extends BaseUIModelScreen<FlowLayout> {
         playbackController.seek(deltaMs);
     }
 
+    private void seekToCurrentLyricStart() {
+        if (!timelineManager.hasLyrics()) {
+            playbackController.seekTo(0);
+            return;
+        }
+        var cur = timelineManager.getCurrentLyric();
+        if (cur != null) {
+            playbackController.seekTo(cur.getTimestamp());
+        } else {
+            playbackController.seekTo(0);
+        }
+        refreshStaticLabels();
+    }
+
+    private void toggleViewMode() {
+        if (!showLyricView && !timelineManager.hasLyrics()) {
+            statusMessage = "请先选择并加载 .lrc 文件";
+            refreshStaticLabels();
+            return;
+        }
+        showLyricView = !showLyricView;
+        updateListContent();
+        refreshStaticLabels();
+    }
+
+    private void updateListContent() {
+        if (lyricList == null) return;
+        if (showLyricView && timelineManager.hasLyrics()) {
+            populateLyricLines();
+        } else {
+            showLyricView = false;
+            populateFileList();
+        }
+    }
+
     private void openSettings() {
         assert this.minecraft != null;
         this.minecraft.gui.setScreen(new SettingsScreen(displayConfig, chatSender, commandSender, this));
@@ -200,8 +245,9 @@ public class MainScreen extends BaseUIModelScreen<FlowLayout> {
     private void refreshFiles() {
         try {
             scanLyricDirectory();
-            populateLyricList();
-            statusMessage = discoveredLrcFiles.isEmpty() ? "lyriclive/ 下未找到 .lrc 文件" : "已刷新歌词列表";
+            showLyricView = false;
+            updateListContent();
+            statusMessage = discoveredLrcFiles.isEmpty() ? "lyriclive/ 下未找到 .lrc 文件" : "已刷新文件列表";
         } catch (IOException e) {
             statusMessage = "读取目录失败: " + e.getMessage();
         }
@@ -219,11 +265,41 @@ public class MainScreen extends BaseUIModelScreen<FlowLayout> {
         }
     }
 
-    private void populateLyricList() {
+    private void populateFileList() {
         lyricList.clearChildren();
+        if (discoveredLrcFiles.isEmpty()) {
+            lyricList.child(UIComponents.label(Component.literal("未在 lyriclive/ 找到 .lrc 文件")));
+            return;
+        }
         for (Path path : discoveredLrcFiles) {
             String fileName = path.getFileName().toString();
-            lyricList.child(UIComponents.button(Component.literal(fileName), button -> loadFile(path)));
+            ButtonComponent btn = UIComponents.button(Component.literal(fileName), button -> loadFile(path));
+            btn.horizontalSizing(Sizing.fill(100));
+            lyricList.child(btn);
+        }
+    }
+
+    private void populateLyricLines() {
+        lyricList.clearChildren();
+        if (!timelineManager.hasLyrics()) {
+            lyricList.child(UIComponents.label(Component.literal("未加载任何歌词")));
+            return;
+        }
+        var lyrics = timelineManager.getCurrentTrack().getLyrics();
+        for (int i = 0; i < lyrics.size(); i++) {
+            var lyric = lyrics.get(i);
+            String timeStr = LyricUtils.fmtTime(lyric.getTimestamp());
+            String text = lyric.getText().isEmpty() ? "--- (间奏)" : lyric.getText();
+            String display = "[" + timeStr + "] " + LyricUtils.trunc(text, 24);
+            ButtonComponent lineBtn = UIComponents.button(Component.literal(display), button -> {
+                playbackController.seekTo(lyric.getTimestamp());
+                if (!playbackController.isPlaying()) {
+                    playbackController.play();
+                }
+                refreshStaticLabels();
+            });
+            lineBtn.horizontalSizing(Sizing.fill(100));
+            lyricList.child(lineBtn);
         }
     }
 
@@ -232,6 +308,8 @@ public class MainScreen extends BaseUIModelScreen<FlowLayout> {
             timelineManager.loadLyricFile(path);
             currentLyricFile = path;
             statusMessage = "已加载: " + path.getFileName();
+            showLyricView = true;
+            updateListContent();
         } catch (IOException e) {
             statusMessage = "加载失败: " + e.getMessage();
         }

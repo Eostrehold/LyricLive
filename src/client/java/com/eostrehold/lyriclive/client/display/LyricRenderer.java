@@ -27,7 +27,7 @@ public class LyricRenderer {
     private long lastRenderNanos;
     private float fadeInAlpha = 0f;
     // 过渡动画
-    private int lastRenderedCenter = -1;
+    private int lastGlobalLyricIndex = -1;
     private float lineTransitionAlpha = 1f;
 
     // 信息栏淡入
@@ -48,7 +48,7 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
             smoothCenterIndex = -1f;
             fadeInAlpha = 0f;
             lineTransitionAlpha = 1f;
-            lastRenderedCenter = -1;
+            lastGlobalLyricIndex = -1;
             return;
         }
 
@@ -75,10 +75,11 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
         int realCenter = ctx.indexOf(cur);
         if (realCenter < 0) realCenter = 0;
 
-        if (realCenter != lastRenderedCenter && lastRenderedCenter >= 0) {
+        int currentGlobalIndex = timelineManager.getCurrentLyricIndex();
+        if (currentGlobalIndex != lastGlobalLyricIndex && lastGlobalLyricIndex >= 0) {
             lineTransitionAlpha = 0f;
         }
-        lastRenderedCenter = realCenter;
+        lastGlobalLyricIndex = currentGlobalIndex;
 
         if (config.isFadeInOutEnabled()) {
             float transitionSpeed = 1000f / Math.max(1, config.getFadeOutDuration());
@@ -102,7 +103,7 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
 
         // 字体缩放：通过矩阵栈缩放所有绘制内容
         float fontScale = config.getFontSize() / 16.0f;
-        int lh = Math.max(1, Math.round(11 / fontScale));
+        int lh = c.font.lineHeight + 2;
 
         var pose = g.pose();
         pose.pushMatrix();
@@ -113,8 +114,8 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
         int baseX = Math.round(config.getPixelX(sw) / fontScale);
         int baseY = Math.round(config.getPixelY(sh) / fontScale);
 
-        // 信息栏
-        int infoY = baseY + ctx.size() * lh + 4;
+        // 信息栏：放置在歌词上下文下方
+        int infoY = baseY + (ctx.size() - realCenter) * lh + 4;
         drawHudInfo(g, c, baseX, infoY, baseAlpha, track, lh);
 
         // 丝滑滚动
@@ -174,14 +175,18 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
 
         String name = track.getTitle() != null ? track.getTitle() : "";
         if (!name.isEmpty()) {
-            g.text(c.font, LyricUtils.trunc(name, 22), x, y + row * lh, white, true);
+            String titleText = LyricUtils.trunc(name, 22);
+            int drawX = config.isCentered() ? x - c.font.width(titleText) / 2 : x;
+            g.text(c.font, titleText, drawX, y + row * lh, white, true);
             row++;
         }
 
         long curMs = playbackController.getCurrentTimeMillis();
         var lyrics = track.getLyrics();
         long totalMs = lyrics.isEmpty() ? 0 : lyrics.get(lyrics.size() - 1).getTimestamp();
-        g.text(c.font, LyricUtils.fmtTime(curMs) + " / " + LyricUtils.fmtTime(totalMs), x, y + row * lh, gray, true);
+        String timeStr = LyricUtils.fmtTime(curMs) + " / " + LyricUtils.fmtTime(totalMs);
+        int timeX = config.isCentered() ? x - c.font.width(timeStr) / 2 : x;
+        g.text(c.font, timeStr, timeX, y + row * lh, gray, true);
         row++;
 
         String state = switch (playbackController.getState()) {
@@ -194,11 +199,15 @@ public LyricRenderer(TimelineManager timelineManager, PlaybackController playbac
             case PAUSED -> (a << 24) | 0xFFFF55;
             case STOPPED -> red;
         };
-        g.text(c.font, state, x, y + row * lh, stateColor, true);
+        int stateX = config.isCentered() ? x - c.font.width(state) / 2 : x;
+        g.text(c.font, state, stateX, y + row * lh, stateColor, true);
         row++;
 
         boolean auto = autoSendSupplier.getAsBoolean();
-        g.text(c.font, auto ? "AUTO ON" : "AUTO OFF", x, y + row * lh, auto ? green : red, true);
+        String autoStr = auto ? "AUTO ON" : "AUTO OFF";
+        int autoColor = auto ? green : red;
+        int autoX = config.isCentered() ? x - c.font.width(autoStr) / 2 : x;
+        g.text(c.font, autoStr, autoX, y + row * lh, autoColor, true);
     }
 
     public DisplayConfig getConfig() { return config; }

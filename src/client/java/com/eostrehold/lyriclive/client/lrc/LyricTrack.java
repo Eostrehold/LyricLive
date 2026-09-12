@@ -12,6 +12,7 @@ public class LyricTrack {
     private String artist;     // 艺术家
     private String album;      // 专辑
     private String author;     // 歌词作者
+    private long offset = 0;   // 整体时间偏移量（毫秒，对应 [offset:+/-ms]）
     private final List<LrcLyric> lyrics; // 歌词列表（按时间排序）
 
     public LyricTrack() {
@@ -64,11 +65,34 @@ public class LyricTrack {
         this.author = author;
     }
 
+    public long getOffset() {
+        return offset;
+    }
+
+    public void setOffset(long offset) {
+        this.offset = offset;
+    }
+
     /**
      * 添加歌词行（追加到末尾）
      */
     public void addLyric(LrcLyric lyric) {
         lyrics.add(lyric);
+    }
+
+    /**
+     * 应用整体时间偏移量并排序（解析完成后调用）
+     */
+    public void applyOffsetAndSort() {
+        if (offset != 0) {
+            for (int i = 0; i < lyrics.size(); i++) {
+                LrcLyric old = lyrics.get(i);
+                // 标准 LRC offset：正数表示提前显示，时间戳减去 offset
+                long adjustedTime = Math.max(0, old.getTimestamp() - offset);
+                lyrics.set(i, new LrcLyric(adjustedTime, old.getText()));
+            }
+        }
+        sort();
     }
 
     /**

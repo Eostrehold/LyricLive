@@ -165,6 +165,17 @@ public class TimelineManager {
     }
 
     /**
+     * 获取歌词总时长（毫秒），即最后一行歌词的时间戳
+     */
+    public long getTotalDurationMillis() {
+        if (currentTrack == null || currentTrack.isEmpty()) {
+            return 0;
+        }
+        var lyrics = currentTrack.getLyrics();
+        return lyrics.isEmpty() ? 0 : lyrics.get(lyrics.size() - 1).getTimestamp();
+    }
+
+    /**
      * 清除当前歌词
      */
     public void clearLyrics() {

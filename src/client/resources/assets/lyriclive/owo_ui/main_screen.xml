@@ -9,6 +9,9 @@
                         <button id="refresh-button">
                             <text>刷新列表</text>
                         </button>
+                        <button id="view-toggle-button">
+                            <text>切换视图</text>
+                        </button>
                         <button id="settings-button">
                             <text>设置</text>
                         </button>

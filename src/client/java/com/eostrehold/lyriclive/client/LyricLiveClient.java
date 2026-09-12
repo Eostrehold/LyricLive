@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
@@ -83,7 +84,8 @@ public class LyricLiveClient implements ClientModInitializer {
         HudElementRegistry.addLast(
                 Identifier.fromNamespaceAndPath(LyricLive.MOD_ID, "lyric_display"),
                 (context, dt) -> {
-                    if (Minecraft.getInstance().player != null && Minecraft.getInstance().gui.screen() == null) {
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player != null && mc.gui.screen() == null && !mc.options.hideGui) {
                         lyricRenderer.render(context);
                     }
                 });
@@ -94,6 +96,13 @@ public class LyricLiveClient implements ClientModInitializer {
             handleKeyBindings(client);
             handleAutoLyricSending();
         });
+    }
+
+    private static void showActionBar(String message) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.gui != null) {
+            mc.gui.setOverlayMessage(Component.literal(message), false);
+        }
     }
 
     /**
@@ -113,19 +122,30 @@ public class LyricLiveClient implements ClientModInitializer {
             if (client.gui.screen() == null) client.gui.setScreen(getOrCreateMainScreen());
         }
         while (togglePlayPauseKey.consumeClick()) {
-            if (playbackController.isPlaying()) playbackController.pause();
-            else playbackController.play();
+            if (playbackController.isPlaying()) {
+                playbackController.pause();
+                showActionBar("§6[LyricLive] §e播放已暂停");
+            } else {
+                playbackController.play();
+                showActionBar("§6[LyricLive] §a播放已开始");
+            }
         }
         while (stopKey.consumeClick()) {
             playbackController.stop();
             manualLyricIndex = -1;
             lastAutoSentIndex = -1;
+            showActionBar("§6[LyricLive] §c播放已停止");
         }
         while (sendLyricKey.consumeClick()) {
-            manualSendCurrentLyric();
+            if (autoSendEnabled) {
+                showActionBar("§6[LyricLive] §7自动发送已开启，手动发送已锁定");
+            } else {
+                manualSendCurrentLyric();
+            }
         }
         while (toggleAutoSendKey.consumeClick()) {
             autoSendEnabled = !autoSendEnabled;
+            showActionBar(autoSendEnabled ? "§6[LyricLive] §a自动发送: 已开启" : "§6[LyricLive] §c自动发送: 已关闭");
         }
     }
 
@@ -156,8 +176,22 @@ public class LyricLiveClient implements ClientModInitializer {
     }
 
     private void handleAutoLyricSending() {
-        if (!playbackController.isPlaying() || !autoSendEnabled || !timelineManager.hasLyrics()) {
+        if (!playbackController.isPlaying() || !timelineManager.hasLyrics()) {
             lastAutoSentIndex = -1;
+            return;
+        }
+
+        // 检查歌曲是否播放完毕（超过最后时间戳 4 秒自动停止）
+        long totalDuration = timelineManager.getTotalDurationMillis();
+        if (totalDuration > 0 && playbackController.getCurrentTimeMillis() > totalDuration + 4000) {
+            playbackController.stop();
+            manualLyricIndex = -1;
+            lastAutoSentIndex = -1;
+            showActionBar("§6[LyricLive] §f播放结束");
+            return;
+        }
+
+        if (!autoSendEnabled) {
             return;
         }
 

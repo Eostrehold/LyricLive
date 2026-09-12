@@ -7,10 +7,10 @@ import com.eostrehold.lyriclive.LyricLive;
  * 使用 System.nanoTime() 保证高精度时间同步。
  */
 public class PlaybackController {
-    private PlaybackState state = PlaybackState.STOPPED;
-    private long startNanoTime;      // 播放开始时的系统纳秒时间
-    private long offsetMillis = 0;   // 时间偏移量（毫秒），用于调整起始时间
-    private long pauseNanoTime;      // 暂停时的系统纳秒时间
+    private volatile PlaybackState state = PlaybackState.STOPPED;
+    private volatile long startNanoTime;      // 播放开始时的系统纳秒时间
+    private volatile long offsetMillis = 0;   // 时间偏移量（毫秒），用于调整起始时间
+    private volatile long pauseNanoTime;      // 暂停时的系统纳秒时间
 
     /**
      * 开始播放
@@ -116,11 +116,8 @@ public class PlaybackController {
      * @param deltaMs 调整量（毫秒），正数为快进，负数为快退
      */
     public void seek(long deltaMs) {
-        offsetMillis += deltaMs;
-        if (offsetMillis < 0) {
-            offsetMillis = 0;
-        }
-        LyricLive.LOGGER.info("调整播放进度: {}ms, 当前偏移: {}ms", deltaMs, offsetMillis);
+        long targetTime = Math.max(0, getCurrentTimeMillis() + deltaMs);
+        seekTo(targetTime);
     }
 
     /**
@@ -128,13 +125,14 @@ public class PlaybackController {
      * @param timeMs 目标时间（毫秒）
      */
     public void seekTo(long timeMs) {
-        this.offsetMillis = timeMs;
+        long clampedTime = Math.max(0, timeMs);
+        this.offsetMillis = clampedTime;
         if (state == PlaybackState.PLAYING) {
             startNanoTime = System.nanoTime();
         } else if (state == PlaybackState.PAUSED) {
             startNanoTime = pauseNanoTime;
         }
-        LyricLive.LOGGER.info("跳转到: {}ms", timeMs);
+        LyricLive.LOGGER.info("跳转到: {}ms", clampedTime);
     }
 
     /**
