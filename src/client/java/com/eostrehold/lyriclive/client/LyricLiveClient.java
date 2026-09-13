@@ -15,7 +15,6 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
@@ -98,13 +97,6 @@ public class LyricLiveClient implements ClientModInitializer {
         });
     }
 
-    private static void showActionBar(String message) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            mc.player.displayClientMessage(Component.literal(message), true);
-        }
-    }
-
     /**
      * 懒加载主界面。owo 的 UI 模型在资源重载完成后才会被 UIModelLoader 缓存，
      * 若在客户端初始化早期创建 BaseUIModelScreen，模型加载会失败并触发
@@ -124,28 +116,20 @@ public class LyricLiveClient implements ClientModInitializer {
         while (togglePlayPauseKey.consumeClick()) {
             if (playbackController.isPlaying()) {
                 playbackController.pause();
-                showActionBar("§6[LyricLive] §e播放已暂停");
             } else {
                 playbackController.play();
-                showActionBar("§6[LyricLive] §a播放已开始");
             }
         }
         while (stopKey.consumeClick()) {
             playbackController.stop();
             manualLyricIndex = -1;
             lastAutoSentIndex = -1;
-            showActionBar("§6[LyricLive] §c播放已停止");
         }
         while (sendLyricKey.consumeClick()) {
-            if (autoSendEnabled) {
-                showActionBar("§6[LyricLive] §7自动发送已开启，手动发送已锁定");
-            } else {
-                manualSendCurrentLyric();
-            }
+            manualSendCurrentLyric();
         }
         while (toggleAutoSendKey.consumeClick()) {
             autoSendEnabled = !autoSendEnabled;
-            showActionBar(autoSendEnabled ? "§6[LyricLive] §a自动发送: 已开启" : "§6[LyricLive] §c自动发送: 已关闭");
         }
     }
 
@@ -187,7 +171,6 @@ public class LyricLiveClient implements ClientModInitializer {
             playbackController.stop();
             manualLyricIndex = -1;
             lastAutoSentIndex = -1;
-            showActionBar("§6[LyricLive] §f播放结束");
             return;
         }
 
